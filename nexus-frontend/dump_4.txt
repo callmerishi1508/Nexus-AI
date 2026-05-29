@@ -1,0 +1,52 @@
+Created At: 2026-05-27T12:42:08Z
+Completed At: 2026-05-27T12:42:09Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1276
+Total Bytes: 88748
+Showing lines 1100 to 1150
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1100:                     />
+1101:                     <div className="flex justify-between px-2 mt-1">
+1102:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+1103:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+1104:                     </div>
+1105:                 </div>
+1106:              </div>
+1107:           ) : masterMode === "SIMULATION" ? (
+1108:              /* SCENARIO SANDBOX TAB */
+1109:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+1110:                 <div className="flex justify-between items-start mb-6">
+1111:                   <div>
+1112:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+1113:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+1114:                     </h2>
+1115:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+1116:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+1117:                   </div>
+1118:                   {simulationResult && (
+1119:                     <div className="text-right">
+1120:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+1121:                       
+<truncated 622 bytes>
+-zinc-400 uppercase tracking-widest">Perturbation Variables</h3>
+1131:                       <div>
+1132:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Target Node</label>
+1133:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simTarget} onChange={e => setSimTarget(e.target.value)}>
+1134:                           <option>Notion</option>
+1135:                           <option>Airtable</option>
+1136:                           <option>Vercel</option>
+1137:                         </select>
+1138:                       </div>
+1139:                       <div>
+1140:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Mutation Type</label>
+1141:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simMutation} onChange={e => setSimMutation(e.target.value)}>
+1142:                           <option>Pricing -15%</option>
+1143:                           <option>Acquisition Attempt</option>
+1144:                           <option>Feature Parity (AI)</option>
+1145:                         </select>
+1146:                       </div>
+1147:                       <div>
+1148:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Temporal Horizon</label>
+1149:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simHorizon} onChange={e => setSimHorizon(e.target.value)}>
+1150:                           <option>SHORT</option>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

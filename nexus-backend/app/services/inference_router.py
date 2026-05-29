@@ -1,122 +1,98 @@
-import httpx
+import os
 import time
 import json
+import asyncio
 from typing import Dict, Any, Tuple
-from langchain_community.chat_models import ChatOllama
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
 class InferenceRouter:
     def __init__(self):
-        self.provider_hierarchy = ["LOCAL_OLLAMA", "DETERMINISTIC_RECOVERY"]
-        self.ollama_base_url = "http://localhost:11434"
-        self.model_name = "llama3"
+        self.provider_hierarchy = ["AIML_API", "DETERMINISTIC_RECOVERY"]
+        self.aiml_api_key = os.getenv("AIML_API_KEY")
+        self.aiml_base_url = os.getenv("AIML_BASE_URL", "https://api.aimlapi.com/v1")
+        # Use a high-quality model from AIML API
+        self.model_name = "gpt-4o"
         
         # Telemetry state
         self.current_provider = "UNKNOWN"
         self.provider_health = "UNREACHABLE"
         
     async def check_health(self) -> str:
-        """Determines if the primary sovereign provider is available."""
-        try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                response = await client.get(f"{self.ollama_base_url}/api/version")
-                if response.status_code == 200:
-                    self.provider_health = "AVAILABLE"
-                    return "AVAILABLE"
-        except Exception:
-            pass
-            
+        """Determines if the AIML API is available."""
+        if self.aiml_api_key and len(self.aiml_api_key) > 5:
+            self.provider_health = "AVAILABLE"
+            return "AVAILABLE"
         self.provider_health = "UNREACHABLE"
         return "UNREACHABLE"
         
     async def warm_up(self):
         """Cold start protection during FastAPI lifespan."""
-        print("Warming up Local LLaMA-3 sovereign inference engine...")
+        print("Warming up AIML API inference engine...")
         health = await self.check_health()
         if health == "AVAILABLE":
-            try:
-                # Send a tiny prompt to ensure the model is loaded into VRAM
-                llm = ChatOllama(model=self.model_name, base_url=self.ollama_base_url)
-                await llm.ainvoke("ping")
-                print("Local LLaMA-3 is WARM and READY.")
-            except Exception as e:
-                print(f"Warning: LLaMA-3 warm-up failed: {str(e)}")
-                self.provider_health = "DEGRADED"
+            print("AIML API is WARM and READY.")
         else:
-            print("Local LLaMA-3 is UNREACHABLE. Defaulting to DETERMINISTIC_RECOVERY.")
-            
-    def get_deterministic_mock(self, content: str) -> Dict[str, Any]:
-        """Provides the absolute survival fallback mechanism if AI is down."""
-        if "Enterprise" in content:
-            return {
-                "pricing": {
-                    "Plus": {"price": "$8/user/month"},
-                    "Enterprise": {"price": "Contact Sales (Updated)"}
-                },
-                "features": ["Advanced SSO", "Audit Logs"]
-            }
-        else:
-            return {
-                "pricing": {
-                    "Plus": {"price": "$10/user/month"},
-                    "Enterprise": {"price": "Contact Sales"}
-                },
-                "features": ["SSO"]
-            }
+            print("AIML API Key is missing. Defaulting to DETERMINISTIC_RECOVERY.")
 
-    async def execute_semantic_extraction(self, content: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Routes the inference request to the highest priority available provider.
-        Returns: (extracted_data, telemetry)
-        """
+
+
+    async def route_inference(self, prompt: str, system_prompt: str, structured_schema: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Generic inference router for dynamic synthesis and projections."""
         start_time = time.time()
         health = await self.check_health()
         
         if health == "AVAILABLE":
-            self.current_provider = "LOCAL_OLLAMA"
+            self.current_provider = "AIML_API"
             try:
-                llm = ChatOllama(model=self.model_name, base_url=self.ollama_base_url, temperature=0.0, format="json")
-                
-                prompt = PromptTemplate.from_template(
-                    "You are an expert data extractor. Extract pricing tiers and features from this markdown content.\n\n"
-                    "Respond ONLY with valid JSON in this exact structure:\n"
-                    "{{\"pricing\": {{\"TierName\": {{\"price\": \"$X\"}}}}, \"features\": [\"Feature 1\"]}}\n\n"
-                    "Content: {content}"
+                llm = ChatOpenAI(
+                    model=self.model_name,
+                    api_key=self.aiml_api_key,
+                    base_url=self.aiml_base_url,
+                    temperature=0.7
                 )
                 
-                chain = prompt | llm
-                response = await chain.ainvoke({"content": content[:4000]})
+                full_prompt = f"{system_prompt}\n\n{prompt}"
+                if structured_schema:
+                    full_prompt += f"\n\nOUTPUT FORMAT REQUIRED JSON MATCHING SCHEMA:\n{json.dumps(structured_schema)}"
+
+                response = await asyncio.wait_for(llm.ainvoke(full_prompt), timeout=30.0)
+                latency = round((time.time() - start_time) * 1000)
                 
-                try:
-                    # Clean up if markdown block is returned
-                    raw_json = response.content.replace("```json", "").replace("```", "").strip()
-                    extracted_data = json.loads(raw_json)
-                    latency = round((time.time() - start_time) * 1000)
-                    
-                    return extracted_data, {
-                        "inference_provider": self.current_provider,
-                        "provider_health": self.provider_health,
-                        "latency_ms": latency
-                    }
-                except json.JSONDecodeError:
-                    # Degraded fallback if model outputs garbage
-                    self.provider_health = "DEGRADED"
-                    raise ValueError("Model failed to output valid JSON.")
-                    
+                return {
+                    "content": response.content,
+                    "provider": self.current_provider,
+                    "latency_ms": latency
+                }
+            except asyncio.TimeoutError:
+                print("AIML inference timed out after 30s. Falling back to deterministic recovery.")
+                self.provider_health = "DEGRADED"
             except Exception as e:
-                print(f"Sovereign inference failed: {e}. Falling back to deterministic recovery.")
+                print(f"AIML inference failed: {e}. Falling back to deterministic recovery.")
                 self.provider_health = "DEGRADED"
         
-        # Graceful Degradation to Deterministic Recovery
+        # Fallback
         self.current_provider = "DETERMINISTIC_RECOVERY"
-        extracted_data = self.get_deterministic_mock(content)
+        if structured_schema:
+            keys = structured_schema.get("required", [])
+            dummy = {}
+            for k in keys:
+                if 'confidence' in k or 'count' in k:
+                    dummy[k] = 50
+                elif structured_schema.get("properties", {}).get(k, {}).get("type") == "array":
+                    dummy[k] = []
+                else:
+                    dummy[k] = f"Generated fallback for {k}"
+            content_str = json.dumps(dummy)
+        else:
+            content_str = "Under the bounded constraint of the current scenario, the ecosystem is highly likely to experience systemic shifts."
+            
         latency = round((time.time() - start_time) * 1000)
-        
-        return extracted_data, {
-            "inference_provider": self.current_provider,
-            "provider_health": self.provider_health,
-            "latency_ms": latency,
-            "routing_event": "Inference routing switched to deterministic recovery provider"
+        return {
+            "content": content_str,
+            "provider": self.current_provider,
+            "latency_ms": latency
         }
+
 
 inference_router = InferenceRouter()

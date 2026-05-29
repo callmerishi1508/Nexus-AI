@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.db.models import get_db, GovernanceReview
 from app.events.bus import distributed_bus
+from app.api.dependencies import get_tenant
 from app.auth.roles import require_role, Role, MIN_ROLE_FOR_GOVERNANCE_ADJUDICATION
 
 router = APIRouter()
@@ -19,6 +20,7 @@ class ReviewAction(BaseModel):
 @router.get("/queue")
 async def get_review_queue(
     db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant),
     role: Role = Depends(require_role(Role.ANALYST))
 ):
     """
@@ -26,6 +28,7 @@ async def get_review_queue(
     """
     result = await db.execute(
         select(GovernanceReview)
+        .where(GovernanceReview.tenant_id == tenant_id)
         .where(GovernanceReview.status.in_(["REVIEW_REQUIRED", "ESCALATED"]))
         .order_by(GovernanceReview.priority_score.desc())
     )
@@ -51,12 +54,13 @@ async def adjudicate_review(
     review_id: str, 
     action: ReviewAction, 
     db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant),
     role: Role = Depends(require_role(MIN_ROLE_FOR_GOVERNANCE_ADJUDICATION))
 ):
     """
     State machine transition for institutional governance.
     """
-    result = await db.execute(select(GovernanceReview).where(GovernanceReview.id == review_id))
+    result = await db.execute(select(GovernanceReview).where(GovernanceReview.id == review_id, GovernanceReview.tenant_id == tenant_id))
     review = result.scalar_one_or_none()
     
     if not review:

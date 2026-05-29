@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  :root {
+    --background: #09090b; /* zinc-950 */
+    --foreground: #fafafa;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: url("/noise.png");
+    background-repeat: repeat;
+  }
+  
+  .font-mono {
+    font-size: 13px;
+  }
+  
+  /* Premium Institutional Glassmorphism */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    position: relative;
+  }
+
+  /* Institutional Text Authority */
+  .text-gradient-institutional {
+    background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Clean hover states for navigation & buttons */
+  .institutional-glow {
+    position: relative;
+    transition: all 0.2s ease-out;
+  }
+  
+  .institutional-glow:hover, .institutional-glow.active {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* Phase 19: Institutional Semantic Classes */
+  .nx-panel {
+    background: rgba(10, 10, 12, 0.85); /* Deep matte */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    transition: border-color 0.5s ease;
+  }
+  
+  .nx-panel:hover {
+    border-color: rgba(99, 102, 241, 0.2); /* Subtle indigo institutional glow */
+  }
+
+  .nx-glass {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .nx-typography {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #71717a; /* zinc-500 */
+    font-weight: 600;
+  }
+}
+
+/* Restrained scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}

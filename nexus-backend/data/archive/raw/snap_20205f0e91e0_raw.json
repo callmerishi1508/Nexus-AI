@@ -1,0 +1,1 @@
+{"company": "Notion (Test Target)", "target_url": "https://example.com/pricing", "acquisition_state": "ACQUISITION_DEGRADED", "raw_html": null, "raw_text": null, "provenance": {"fetch_duration_ms": 11375, "browser_runtime_version": "125.0.6422.26", "retry_count": 1, "acquisition_node": "nexus-primary-mesh"}}

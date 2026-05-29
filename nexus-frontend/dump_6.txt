@@ -1,0 +1,53 @@
+Created At: 2026-05-27T21:36:48Z
+Completed At: 2026-05-27T21:36:49Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1554
+Total Bytes: 98476
+Showing lines 1350 to 1400
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1350:              /* SCENARIO SANDBOX TAB */
+1351:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+1352:                 <div className="flex justify-between items-start mb-6">
+1353:                   <div>
+1354:                     <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+1355:                       <Zap className="w-3 h-3" /> Scenario Sandbox
+1356:                     </h2>
+1357:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+1358:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+1359:                   </div>
+1360:                   {simulationResult && (
+1361:                     <div className="text-right">
+1362:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+1363:                       <div className="text-[10px] font-mono text-blue-400">{simulationResult.fingerprints?.simulation_hash.substring(0, 16)}...</div>
+1364:                     </div>
+1365:                   )}
+1366:                 </div>
+1367: 
+1368:                 <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+1369:                   {/* Left Column: Inputs */}
+1370:                   <div className="col-span-1 flex flex-col gap-4">
+1371:                   
+<truncated 855 bytes>
+</select>
+1380:                       </div>
+1381:                       <div>
+1382:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Mutation Type</label>
+1383:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simMutation} onChange={e => setSimMutation(e.target.value)}>
+1384:                           <option>Pricing -15%</option>
+1385:                           <option>Acquisition Attempt</option>
+1386:                           <option>Feature Parity (AI)</option>
+1387:                         </select>
+1388:                       </div>
+1389:                       <div>
+1390:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Temporal Horizon</label>
+1391:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simHorizon} onChange={e => setSimHorizon(e.target.value)}>
+1392:                           <option>SHORT</option>
+1393:                           <option>MEDIUM</option>
+1394:                           <option>LONG</option>
+1395:                         </select>
+1396:                       </div>
+1397:                       <div>
+1398:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Trajectory Hypothesis</label>
+1399:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simTrajectory} onChange={e => setSimTrajectory(e.target.value)}>
+1400:                           <option>COMPRESSION</option>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

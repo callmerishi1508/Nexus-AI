@@ -1,0 +1,1 @@
+{"company": "Company Gamma", "timestamp": 1780004243.196599, "impact": {"classification": "PRICING_COMPRESSION", "primary_signals": ["PRICING_COMPRESSION"]}, "signals": [{"type": "PRICING_COMPRESSION", "confidence": 0.95, "severity": 2}]}

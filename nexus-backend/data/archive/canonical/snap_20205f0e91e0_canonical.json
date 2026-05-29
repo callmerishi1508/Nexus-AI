@@ -1,0 +1,37 @@
+{
+  "snapshot_id": "snap_20205f0e91e0",
+  "parent_snapshot_id": "snap_hist_001",
+  "lineage_chain_id": "chain_001",
+  "company": "Notion (Test Target)",
+  "timestamp": "2026-05-28T21:08:40.443153",
+  "extractor_version": "v1.0.0",
+  "normalizer_version": "v1.0.0",
+  "ontology_version": "v1.0.0",
+  "ontology_interpretation_hash": null,
+  "acquisition_state": "ACQUISITION_DEGRADED",
+  "dom_stability_score": 0.5,
+  "extraction_confidence": 1.0,
+  "pricing_confidence": 0.0,
+  "feature_confidence": 1.0,
+  "release_notes_confidence": 1.0,
+  "metadata_confidence": 1.0,
+  "pricing": [],
+  "features": [],
+  "release_notes": [],
+  "metadata": {
+    "source_url": "https://example.com/pricing",
+    "user_agent": "nexus-acquisition-kernel/v1.0",
+    "provenance": {
+      "acquisition_runtime": "playwright-chromium",
+      "browser_runtime_version": "125.0.6422.26",
+      "fetch_duration_ms": 11375,
+      "retry_count": 1,
+      "acquisition_node": "nexus-primary-mesh"
+    }
+  },
+  "taxonomy": {
+    "sector": "Enterprise SaaS",
+    "vertical": "General",
+    "target_audience": []
+  }
+}

@@ -1,0 +1,1 @@
+{"company": "Company Beta", "timestamp": 1780004243.195333, "impact": {"classification": "PRICING_COMPRESSION", "primary_signals": ["PRICING_COMPRESSION"]}, "signals": [{"type": "PRICING_COMPRESSION", "confidence": 0.88, "severity": 2}]}

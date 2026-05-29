@@ -4,6 +4,7 @@ from typing import List
 
 class Role(str, Enum):
     OBSERVER = "OBSERVER"
+    TRADER = "TRADER"
     ANALYST = "ANALYST"
     GOVERNANCE = "GOVERNANCE"
     EXECUTIVE = "EXECUTIVE"
@@ -12,10 +13,11 @@ class Role(str, Enum):
 # Pre-defined hierarchy for easy checks
 ROLE_HIERARCHY = {
     Role.OBSERVER: 1,
-    Role.ANALYST: 2,
-    Role.GOVERNANCE: 3,
-    Role.EXECUTIVE: 4,
-    Role.SYSTEM_ADMIN: 5
+    Role.TRADER: 2,
+    Role.ANALYST: 3,
+    Role.GOVERNANCE: 4,
+    Role.EXECUTIVE: 5,
+    Role.SYSTEM_ADMIN: 6
 }
 
 def require_role(min_role: Role):

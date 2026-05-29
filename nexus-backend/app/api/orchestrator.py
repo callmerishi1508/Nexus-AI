@@ -12,6 +12,8 @@ from app.services.parser import process_guarded_inference
 from app.services.engine import extract_semantic_intelligence, generate_semantic_diff, compute_dual_scores
 from app.services.pdf_generator import generate_executive_brief
 from app.services.replay_snapshot import get_latest_snapshot, get_fallback_diff, save_new_snapshot, get_snapshot_lineage
+from app.api.dependencies import get_tenant
+from app.services.sector_generator import generate_and_seed_sector
 
 # =========================================================================
 # NEXUS - ORCHESTRATION LAYER (STAGE 3: PERSISTENT LINEAGE)
@@ -20,14 +22,71 @@ from app.services.replay_snapshot import get_latest_snapshot, get_fallback_diff,
 router = APIRouter()
 
 @router.get("/graph/state")
-async def get_graph_state(db: AsyncSession = Depends(get_db)):
-    state = await export_graph_state(db)
+async def get_graph_state(
+    timestamp: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant)
+):
+    target_dt = None
+    if timestamp:
+        from dateutil.parser import parse
+        target_dt = parse(timestamp)
+    
+    state = await export_graph_state(db, tenant_id, target_dt)
     return state
 
 @router.get("/synthesis/brief")
-async def get_strategic_brief(db: AsyncSession = Depends(get_db)):
-    brief = await synthesis_engine.generate_brief(db)
+async def get_strategic_brief(
+    timestamp: Optional[str] = None,
+    db: AsyncSession = Depends(get_db), 
+    tenant_id: str = Depends(get_tenant)
+):
+    target_dt = None
+    if timestamp:
+        from dateutil.parser import parse
+        target_dt = parse(timestamp)
+        
+    brief = await synthesis_engine.generate_brief(db, tenant_id, target_dt)
     return brief
+
+class ExpandSectorRequest(BaseModel):
+    sector: str
+
+@router.post("/graph/expand_sector")
+async def expand_sector(
+    req: ExpandSectorRequest,
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant)
+):
+    try:
+        result = await generate_and_seed_sector(req.sector, db, tenant_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graph/sectors")
+async def get_all_sectors(db: AsyncSession = Depends(get_db), tenant_id: str = Depends(get_tenant)):
+    from sqlalchemy import select, distinct
+    from app.db.models import GraphNode
+    query = select(distinct(GraphNode.sector)).where(GraphNode.tenant_id == tenant_id, GraphNode.sector != None)
+    result = await db.execute(query)
+    sectors = [row[0] for row in result.all()]
+    return {"sectors": sectors}
+
+@router.get("/temporal/timeline")
+async def get_temporal_timeline(tenant_id: str = Depends(get_tenant)):
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    # Mocking semantic milestones based on seed data timestamps
+    return {
+        "milestones": [
+            {"date": (now - timedelta(days=60)).isoformat() + "Z", "label": "Initial Knowledge Seeding", "type": "SEED"},
+            {"date": (now - timedelta(days=30)).isoformat() + "Z", "label": "Pricing Convergence Detected", "type": "EVENT"},
+            {"date": (now - timedelta(days=15)).isoformat() + "Z", "label": "AI Acceleration Event", "type": "EVENT"},
+            {"date": (now - timedelta(days=5)).isoformat() + "Z", "label": "Governance Freeze Triggered", "type": "GOVERNANCE"},
+            {"date": now.isoformat() + "Z", "label": "Present State", "type": "LIVE"}
+        ]
+    }
 
 class DemoRequest(BaseModel):
     competitor: str
@@ -45,7 +104,7 @@ class DemoResponse(BaseModel):
     timeline: Optional[List[Dict[str, Any]]] = None
 
 @router.post("/run", response_model=DemoResponse)
-async def run_demo_orchestration(req: DemoRequest, background_tasks: BackgroundTasks, request: Request):
+async def run_demo_orchestration(req: DemoRequest, background_tasks: BackgroundTasks, request: Request, tenant_id: str = Depends(get_tenant)):
     """
     Centralized orchestration pipeline for the NEXUS frontend.
     Guarantees deterministic output and demo survivability via SQLite FALLBACK cascades.
@@ -53,8 +112,8 @@ async def run_demo_orchestration(req: DemoRequest, background_tasks: BackgroundT
     telemetry = {}
     
     # 1. Fetch Phase (Proprietary Ingestion using Browser Pool)
-    browser_context = request.app.state.browser_context
-    fetch_result = await safe_fetch_pipeline(req.competitor, req.url, browser_context)
+    browser = request.app.state.browser
+    fetch_result = await safe_fetch_pipeline(req.competitor, req.url, browser)
     mode = fetch_result["mode"]
     
     if "telemetry" in fetch_result:

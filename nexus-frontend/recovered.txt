@@ -1,0 +1,63 @@
+Created At: 2026-05-28T23:38:14Z
+Completed At: 2026-05-28T23:38:15Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1218
+Total Bytes: 69936
+Showing lines 740 to 800
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+740:             </h3>
+741:             <div className="space-y-1">
+742:               {getAllowedTabs().map((view) => {
+743:                  return (
+744:                    <button 
+745:                      key={view.id}
+746:                      onClick={() => setActiveTab(view.id)} 
+747:                      className={`w-full text-left px-4 py-2.5 rounded-md text-sm font-medium flex items-center justify-between transition-colors ${activeTab === view.id ? 'institutional-glow text-white shadow-sm bg-white/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}
+748:                    >
+749:                      <div className="flex items-center gap-3">
+750:                        <span className="truncate">{view.label}</span>
+751:                      </div>
+752:                      {view.id === "governance" && reviewQueue.length > 0 && <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold shrink-0">{reviewQueue.length}</span>}
+753:                    </button>
+754:                  );
+755:               })}
+756:             </div>
+757:           </div>
+758:         </div>
+759:         </div>
+760:       )}
+761:       </div>
+762: 
+763:       {/* Main Workspace */}
+764:       <div className={`flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar ${ROLE_LAYOUT_PRESETS[activeRole]?.density === 'sparse' ? 'p-0' : 'p-6'} ${sessionMode === 'REPLAY' ? 'pb-32' : ''}`}>
+765: 
+766:          {/* Executive Cinematic Header */}
+767:          {ROLE_LAYOUT_PRESETS[activeRole]?.density === 'sparse' && (
+768:       
+<truncated 891 bytes>
+}>
+777:              <div className="flex gap-4">
+778:                   {getAllowedTabs().map(view => (
+779:                       <button 
+780:                           key={view.id}
+781:                           onClick={() => setActiveTab(view.id)}
+782:                           className={`px-4 py-2 rounded-md text-xs font-semibold tracking-wide transition-colors ${activeTab === view.id ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+783:                       >
+784:                           {view.label}
+785:                       </button>
+786:                   ))}
+787:              </div>
+788:              {ROLE_LAYOUT_PRESETS[activeRole]?.density !== 'sparse' && (
+789:                  <div className="flex items-center gap-6">
+790:                      <div className="flex items-center gap-3">
+791:                          <div className="nx-typography">Cognitive Lens</div>
+792:                          <select 
+793:                            className="bg-indigo-950/30 border border-indigo-500/30 rounded-md px-3 py-1.5 text-sm font-medium text-indigo-300 outline-none hover:bg-indigo-900/40 transition-colors"
+794:                            value={activePersona}
+795:                            onChange={(e) => setActivePersona(e.target.value as Persona)}
+796:                          >
+797:                            <option className="bg-zinc-900 text-zinc-300" value="CEO">CEO (Strategic Moat)</option>
+798:                            <option className="bg-zinc-900 text-zinc-300" value="CTO">CTO (Tech Velocity)</option>
+799:                            <option className="bg-zinc-900 text-zinc-300" value="TRADER">Trader (Momentum)</option>
+800:                            <option className="bg-zinc-900 text-zinc-300" value="PM">Product Manager</option>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

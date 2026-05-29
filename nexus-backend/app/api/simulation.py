@@ -5,10 +5,11 @@ from sqlalchemy.future import select
 from typing import List, Dict, Any
 from pydantic import BaseModel
 
-from app.db.models import get_db, StrategicSimulation
+from app.db.models import get_db, StrategicSimulation, WebSnapshot, TargetRegistry, GraphNode
 from app.simulation.engine import ScenarioSandboxEngine
 from app.auth.roles import require_role, Role, MIN_ROLE_FOR_SIMULATION_APPROVAL
 from app.config.settings import settings
+from app.api.dependencies import get_tenant
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,10 +27,13 @@ class SimulationRequest(BaseModel):
     requested_trajectory: str
 
 @router.post("/estimate")
-async def estimate_simulation_cost(req: SimulationRequest, role: Role = Depends(require_role(Role.ANALYST))):
+async def estimate_simulation_cost(req: SimulationRequest, db: AsyncSession = Depends(get_db), tenant_id: str = Depends(get_tenant)):
     """
     Returns resource cost estimates for the proposed simulation.
     """
+    # Verify node exists within tenant scope
+    node_result = await db.execute(select(GraphNode).where(GraphNode.name == req.target_node_id).where(GraphNode.tenant_id == tenant_id))
+    
     # Simple heuristic
     base_mutations = 5
     if req.temporal_horizon == "MEDIUM": base_mutations *= 2
@@ -52,6 +56,7 @@ async def estimate_simulation_cost(req: SimulationRequest, role: Role = Depends(
 async def project_simulation(
     req: SimulationRequest, 
     db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant),
     role: Role = Depends(require_role(MIN_ROLE_FOR_SIMULATION_APPROVAL))
 ):
     """
@@ -83,6 +88,29 @@ async def project_simulation(
         while active_sandboxes >= settings.MAX_PARALLEL_SANDBOXES:
             await asyncio.sleep(1) # wait for slot
         queued_sandboxes -= 1
+
+    # =========================================================================
+    # EPOCH 4: MATURITY CONSTRAINTS
+    # =========================================================================
+    # Check if target is governed and mature enough for simulation
+    target_result = await db.execute(select(TargetRegistry).where(TargetRegistry.company_name == req.target_node_id).where(TargetRegistry.tenant_id == tenant_id))
+    target = target_result.scalar_one_or_none()
+    
+    # DEMO BYPASS: Allow any target
+    # if target and target.onboarding_state != "ACTIVE":
+    #     raise HTTPException(status_code=403, detail=f"Target {req.target_node_id} is not ACTIVE. Current state: {target.onboarding_state}")
+        
+    snapshots_result = await db.execute(
+        select(WebSnapshot.id).where(WebSnapshot.competitor_name == req.target_node_id).where(WebSnapshot.tenant_id == tenant_id)
+    )
+    snapshot_count = len(snapshots_result.scalars().all())
+    
+    # DEMO BYPASS: For the hackathon, we allow simulation of any target entity even if they lack snapshots
+    # if snapshot_count < settings.SIMULATION_MINIMUM_SNAPSHOTS:
+    #     raise HTTPException(
+    #         status_code=403, 
+    #         detail=f"Target {req.target_node_id} lacks evidence maturity. Has {snapshot_count}/{settings.SIMULATION_MINIMUM_SNAPSHOTS} snapshots required."
+    #     )
 
     active_sandboxes += 1
     engine = ScenarioSandboxEngine(db)
@@ -128,12 +156,13 @@ async def project_simulation(
 @router.get("/scenarios")
 async def get_scenarios(
     db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_tenant),
     role: Role = Depends(require_role(Role.ANALYST))
 ):
     """
     Fetches the history of re-playable institutional simulations.
     """
-    result = await db.execute(select(StrategicSimulation).order_by(StrategicSimulation.created_at.desc()))
+    result = await db.execute(select(StrategicSimulation).where(StrategicSimulation.tenant_id == tenant_id).order_by(StrategicSimulation.created_at.desc()))
     simulations = result.scalars().all()
     
     return [

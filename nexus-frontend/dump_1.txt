@@ -1,0 +1,24 @@
+Created At: 2026-05-27T12:11:35Z
+Completed At: 2026-05-27T12:11:35Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69102
+Showing lines 865 to 880
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+865:                         min="0" 
+866:                         max="30" 
+867:                         value={temporalDay} 
+868:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+869:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

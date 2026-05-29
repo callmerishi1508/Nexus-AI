@@ -1,0 +1,55 @@
+Created At: 2026-05-27T12:10:20Z
+Completed At: 2026-05-27T12:10:20Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69102
+Showing lines 840 to 890
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+840:                                       ))}
+841:                                   </div>
+842:                                   
+843:                                   {graphState.nodes.filter(n => n.type === 'SectorTrend').map(node => (
+844:                                       <div key={node.id} className="relative z-10 flex flex-col items-center">
+845:                                           <div className="w-24 h-24 rounded-lg border border-rose-500/50 bg-rose-500/10 flex items-center justify-center text-rose-400 font-mono text-[11px] text-center shadow-[0_0_40px_rgba(244,63,94,0.2)] p-3 animate-pulse">
+846:                                               {node.name}
+847:                                           </div>
+848:                                           <span className="mt-2 font-mono text-[9px] text-rose-500/70 uppercase tracking-widest">CONVERGENCE</span>
+849:                                       </div>
+850:                                   ))}
+851:                                </div>
+852:                            </div>
+853:                        )}
+854:                    </div>
+855:                 </div>
+856: 
+857:                 {/* Temporal Replay Slider */}
+858:                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[600px] bg-zinc-950 border border-zinc-800 rounded-full px-6 py-3 flex flex-col gap-2 shadow-2xl z-20">
+859:                     <div className="flex justify-between items-center px-2">
+860:                         <span className="text-[9px] font-mono text-zinc-500 tracking-widest upperc
+<truncated 308 bytes>
+866:                         max="30" 
+867:                         value={temporalDay} 
+868:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+869:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+881:                   <div>
+882:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+883:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+884:                     </h2>
+885:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+886:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+887:                   </div>
+888:                   {simulationResult && (
+889:                     <div className="text-right">
+890:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

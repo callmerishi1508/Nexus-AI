@@ -1,0 +1,1198 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import { ShieldCheck, Activity, Database, Zap, RefreshCw, ChevronRight, FileText, CheckCircle2, Network, Search, DatabaseZap, Server, Shield, Lock, ShieldAlert, History } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { IntegrityPanel } from "@/components/IntegrityPanel";
+import { ExecutiveView } from "@/components/ExecutiveView";
+import { TemporalRail } from "@/components/TemporalRail";
+import { ROLE_NAVIGATION_MAP, Role, MasterMode } from "@/config/navigationConfig";
+
+export type JSONValue = string | number | boolean | null | JSONObject | JSONArray;
+export interface JSONObject { [k: string]: JSONValue }
+export type JSONArray = Array<JSONValue>;
+
+export default function NexusCommandCenter() {
+  const [masterMode, setMasterMode] = useState<MasterMode>("INTELLIGENCE");
+  const [activeTab, setActiveTab] = useState("strategic_memory");
+  const [reviewQueue, setReviewQueue] = useState<JSONObject[]>([]);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
+
+  const [activeRole, setActiveRole] = useState<Role>("EXECUTIVE");
+  const [activeTenant, setActiveTenant] = useState<"tenant_public" | "tenant_sandbox">("tenant_public");
+  const [isSwappingTenant, setIsSwappingTenant] = useState(false);
+  const [sessionMode, setSessionMode] = useState("LIVE"); // LIVE, REPLAY, SANDBOX, CHAOS
+  const [temporalTarget, setTemporalTarget] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<JSONObject[]>([]);
+  const [costEstimate, setCostEstimate] = useState<JSONObject | null>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [systemAlert, setSystemAlert] = useState<{message: string, type: 'error' | 'warning' | 'info'} | null>(null);
+
+  const handleTenantSwap = (tenantId: "tenant_public" | "tenant_sandbox") => {
+      if (tenantId === activeTenant) return;
+      setIsSwappingTenant(true);
+      // Flush cognitive state
+      setGraphState({nodes: [], edges: []});
+      setReviewQueue([]);
+      setSynthesisBrief(null);
+      setGovernanceTargets([]);
+      setTimeline([]);
+      
+      setTimeout(() => {
+          setActiveTenant(tenantId);
+          setIsSwappingTenant(false);
+      }, 600);
+  };
+
+  
+  const nexusFetch = useCallback(async (url: string, options: RequestInit = {}) => {
+      const headers = { ...options.headers, 'X-Nexus-Tenant': activeTenant, 'X-Nexus-Role': activeRole };
+      return fetch(url, { ...options, headers });
+  }, [activeTenant, activeRole]);
+
+  const showSystemAlert = (message: string, type: 'error' | 'warning' | 'info' = 'error') => {
+      setSystemAlert({ message, type });
+      setTimeout(() => setSystemAlert(null), 6000);
+  };
+
+  const fetchReviewQueue = useCallback(async () => {
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/governance/queue", {
+              headers: { 'X-Nexus-Role': activeRole }
+          });
+          setReviewQueue(await res.json());
+      } catch (e) {}
+  }, [nexusFetch, activeRole, setReviewQueue]);
+  
+  const adjudicate = async (id: string, action: string) => {
+      try {
+          await nexusFetch(`http://localhost:8000/api/governance/${id}/adjudicate`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Nexus-Role': activeRole
+              },
+              body: JSON.stringify({ action })
+          });
+          fetchReviewQueue();
+      } catch(e) {}
+  };
+
+  useEffect(() => {
+      if (masterMode === "INTELLIGENCE" && activeTab === "governance") {
+          setTimeout(fetchReviewQueue, 0);
+      }
+  }, [masterMode, activeTab, fetchReviewQueue]);
+  const [activeSector, setActiveSector] = useState("Productivity SaaS");
+  const [watcherState, setWatcherState] = useState("ACTIVE"); // ACTIVE, STABLE, ESCALATING, DEGRADED, GOVERNANCE_FROZEN, REPLAY, SIMULATION
+  
+  const [sectorTargets, setSectorTargets] = useState<JSONObject>({
+    "Productivity SaaS": ["Notion", "Airtable", "Monday"],
+    "Dev Tools": ["Vercel", "Netlify", "Supabase"]
+  } as JSONObject);
+  const SECTOR_TARGETS = sectorTargets;
+  
+  const [telemetry, setTelemetry] = useState<JSONObject | null>(null);
+  const [graphState, setGraphState] = useState<{nodes: JSONObject[], edges: JSONObject[]}>({nodes: [], edges: []});
+  const [isGraphLoading, setIsGraphLoading] = useState(false);
+  const [synthesisBrief, setSynthesisBrief] = useState<JSONObject | null>(null);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+
+  // Phase 15 Target Registration States
+  const [targetName, setTargetName] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
+  const [targetSector, setTargetSector] = useState("Enterprise AI");
+  const [onboardingState, setOnboardingState] = useState<"IDLE" | "SUBMITTED" | "VALIDATING" | "GOVERNANCE_PENDING">("IDLE");
+  const [onboardingLog, setOnboardingLog] = useState<string[]>([]);
+  const [governanceTargets, setGovernanceTargets] = useState<JSONObject[]>([]);
+
+  // Removed duplicate useEffect
+
+  const fetchGovernanceTargets = useCallback(async () => {
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/governance/targets/");
+          if (res.ok) {
+              const data = await res.json();
+              setGovernanceTargets(data);
+          }
+      } catch (err) {
+          console.error("Failed to fetch targets", err);
+      }
+  }, [nexusFetch, setGovernanceTargets]);
+
+  const submitTarget = async () => {
+      setOnboardingState("SUBMITTED");
+      setOnboardingLog(["Entity submission registered. Requesting validation..."]);
+      
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/governance/targets/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ company_name: targetName, url: targetUrl, sector: targetSector })
+          });
+          
+          if (res.ok) {
+              // Now we poll the backend to simulate the state transition in the UI
+              const pollInterval = setInterval(async () => {
+                  const tRes = await nexusFetch("http://localhost:8000/api/governance/targets/");
+                  if (tRes.ok) {
+                      const targets = await tRes.json();
+                      const current = targets.find((t: JSONObject) => t.company_name === targetName);
+                      if (current) {
+                          if (current.onboarding_state === "VALIDATING" && onboardingState !== "VALIDATING") {
+                              setOnboardingState("VALIDATING");
+                              setOnboardingLog(prev => [...prev, "Initiating domain reachability sweep...", "Assessing taxonomy alignment..."]);
+                          }
+                          if (current.onboarding_state === "GOVERNANCE_PENDING") {
+                              setOnboardingState("GOVERNANCE_PENDING");
+                              setOnboardingLog(prev => [...prev, "Precheck passed. Escalated to Governance Arbitration."]);
+                              clearInterval(pollInterval);
+                          }
+                      }
+                  }
+              }, 1500);
+          } else {
+              const errData = await res.json();
+              setOnboardingState("IDLE");
+              // Check if it's our plausibility gate error
+              if (res.status === 400) {
+                  showSystemAlert("Entity Validation Error: The provided organizational name or primary domain does not resolve to a verified institution. Please verify the entity details and resubmit.", "error");
+                  setOnboardingLog(["Registration aborted: Plausibility gate failed."]);
+              } else {
+                  showSystemAlert("Registration failed: " + (errData.detail || "Unknown error"), "error");
+                  setOnboardingLog(["Registration aborted: System error."]);
+              }
+          }
+      } catch (err) {
+          console.error("Failed to register target", err);
+      }
+  };
+
+  const approveTarget = async (id: string) => {
+      try {
+          const res = await nexusFetch(`http://localhost:8000/api/governance/targets/${id}/approve`, {
+              method: "POST"
+          });
+          if (res.ok) {
+              fetchGovernanceTargets();
+              // Poll to see transition to ACTIVE
+              const pollInterval = setInterval(async () => {
+                  const tRes = await nexusFetch("http://localhost:8000/api/governance/targets/");
+                  if (tRes.ok) {
+                      const targets = await tRes.json();
+                      const current = targets.find((t: JSONObject) => t.id === id);
+                      if (current) {
+                          setGovernanceTargets(targets);
+                          if (current.onboarding_state === "ACTIVE") {
+                              clearInterval(pollInterval);
+                          }
+                      }
+                  }
+              }, 1500);
+          }
+      } catch (err) {
+          console.error("Approval failed", err);
+      }
+  };  const [temporalDay, setTemporalDay] = useState(0);
+  const [diffData, setDiffData] = useState<JSONObject | null>(null);
+  const [scores, setScores] = useState<JSONObject | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [currentCycle, setCurrentCycle] = useState("cycle_0000");
+  const [chaosMode, setChaosMode] = useState(false);
+  const [operationalFeed, setOperationalFeed] = useState<string[]>([]);
+  const [inferenceMeta, setInferenceMeta] = useState<JSONObject | null>(null);
+  const [governanceState, setGovernanceState] = useState<string>("ACTIVE");
+  const [governancePulse, setGovernancePulse] = useState<boolean>(false);
+  const [eventMeta, setEventMeta] = useState<JSONObject | null>(null);
+
+  // Simulation State
+  const [simTarget, setSimTarget] = useState("");
+  const [simMutation, setSimMutation] = useState("");
+  const [simHorizon, setSimHorizon] = useState("SHORT");
+  const [simTrajectory, setSimTrajectory] = useState("");
+  const [simulationResult, setSimulationResult] = useState<JSONObject | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [newTargetCompany, setNewTargetCompany] = useState("");
+  const [newTargetUrl, setNewTargetUrl] = useState("");
+  const [newTargetSector, setNewTargetSector] = useState("Productivity SaaS");
+  const [isAddingTarget, setIsAddingTarget] = useState(false);
+  const [rawTargets, setRawTargets] = useState<JSONObject[]>([]);
+
+  const handleAddTarget = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsAddingTarget(true);
+      try {
+          await nexusFetch("http://localhost:8000/api/system/targets", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ company: newTargetCompany, url: newTargetUrl, sector: newTargetSector })
+          });
+          await fetchTargets();
+          setNewTargetCompany("");
+          setNewTargetUrl("");
+          // Keep sector selected
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setIsAddingTarget(false);
+      }
+  };
+
+  const runSimulation = async () => {
+      setIsSimulating(true);
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/simulation/project", {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Nexus-Role': activeRole
+              },
+              body: JSON.stringify({
+                  target_node_id: simTarget,
+                  mutation_type: simMutation,
+                  temporal_horizon: simHorizon,
+                  requested_trajectory: simTrajectory
+              })
+          });
+          const data = await res.json();
+          if (res.ok) {
+              setSimulationResult(data);
+              
+              // Phase 18 Wow moment: Dynamically inject target into graph state if missing 
+              // so it "shows correctly" in Entity Topology immediately.
+              if (simTarget && !graphState.nodes.find(n => typeof n.name === 'string' && n.name.toLowerCase() === simTarget.toLowerCase())) {
+                  setGraphState(prev => ({
+                      ...prev,
+                      nodes: [...prev.nodes, {
+                          id: `mock_node_${Date.now()}`,
+                          type: 'Company',
+                          name: simTarget,
+                          sector: 'Dynamic Synthesis',
+                          attributes: {}
+                      }]
+                  }));
+              }
+          } else {
+              showSystemAlert(data.detail || "Simulation failed due to governance constraints.", "error");
+          }
+      } catch (e: any) {
+          showSystemAlert("Simulation Error: " + (e.message || "Network Error"), "error");
+      }
+      setIsSimulating(false);
+  };
+
+  const getTimestamp = (isoString?: string) => {
+      const d = isoString ? new Date(isoString) : new Date();
+      return d.toISOString().split('T')[1].slice(0, 12);
+  };
+
+  const fetchCostEstimate = useCallback(async () => {
+      setIsEstimating(true);
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/simulation/estimate", {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Nexus-Role': activeRole
+              },
+              body: JSON.stringify({
+                  target_node_id: simTarget,
+                  mutation_type: simMutation,
+                  temporal_horizon: simHorizon,
+                  requested_trajectory: simTrajectory
+              })
+          });
+          const data = await res.json();
+          if(res.ok) setCostEstimate(data);
+      } catch (e) {}
+      setIsEstimating(false);
+  }, [nexusFetch, activeRole, simTarget, simMutation, simHorizon, simTrajectory, setIsEstimating, setCostEstimate]);
+
+  useEffect(() => {
+      setTimeout(fetchCostEstimate, 0);
+  }, [fetchCostEstimate]);
+
+  const fetchTimeline = useCallback(async () => {
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/demo/temporal/timeline");
+          if (res.ok) {
+              const data = await res.json();
+              setTimeline(data.milestones || []);
+          }
+      } catch (e) {
+          console.error("Failed to fetch timeline", e);
+      }
+  }, [nexusFetch, setTimeline]);
+
+  useEffect(() => {
+      setTimeout(fetchTimeline, 0);
+  }, [fetchTimeline]);
+
+  const fetchGraphState = useCallback(async (timestamp?: string) => {
+      setIsGraphLoading(true);
+      try {
+          const url = timestamp 
+              ? `http://localhost:8000/api/demo/graph/state?timestamp=${encodeURIComponent(timestamp)}`
+              : "http://localhost:8000/api/demo/graph/state";
+          const res = await nexusFetch(url);
+          if (!res.ok) {
+              console.warn("Graph API returned error", res.status);
+              return;
+          }
+          const data = await res.json();
+          if (data.nodes && data.edges) {
+              setGraphState(data);
+          }
+      } catch (e) {
+          console.error("Failed to fetch graph state", e);
+      } finally {
+          setIsGraphLoading(false);
+      }
+  }, [nexusFetch, setGraphState]);
+
+  const fetchSynthesisBrief = useCallback(async (timestamp?: string) => {
+      setIsSynthesizing(true);
+      try {
+          const url = timestamp 
+              ? `http://localhost:8000/api/demo/synthesis/brief?timestamp=${encodeURIComponent(timestamp)}`
+              : "http://localhost:8000/api/demo/synthesis/brief";
+          const res = await nexusFetch(url);
+          if (!res.ok) {
+              console.warn("Synthesis API returned error", res.status);
+              return;
+          }
+          const data = await res.json();
+          setSynthesisBrief(data);
+      } catch (e) {
+          console.error("Failed to fetch synthesis", e);
+      } finally {
+          setIsSynthesizing(false);
+      }
+  }, [nexusFetch, setIsSynthesizing, setSynthesisBrief]);
+
+
+  const fetchTargets = useCallback(async () => {
+      try {
+          const res = await nexusFetch("http://localhost:8000/api/system/targets");
+          if (res.ok) {
+              const data = await res.json();
+              if (Object.keys(data.sector_targets).length > 0) {
+                  setSectorTargets(data.sector_targets);
+              }
+          }
+          const rawRes = await nexusFetch("http://localhost:8000/api/system/targets/all");
+          if (rawRes.ok) {
+              const rawData = await rawRes.json();
+              setRawTargets(rawData.targets);
+          }
+      } catch (e) {
+          console.error("Failed to fetch targets", e);
+      }
+  }, [nexusFetch, setSectorTargets, setRawTargets]);
+  useEffect(() => {
+    // Purge graph and refetch on context switch (sector or session)
+    setGraphState({nodes: [], edges: []});
+    fetchGraphState();
+
+    let sse: EventSource;
+    let reconnectTimeout: NodeJS.Timeout;
+    let retryDelay = 1000;
+    const maxRetryDelay = 30000;
+
+    const connectSSE = () => {
+        if (sessionMode === "REPLAY") return; // Pause live feed during replay
+        sse = new EventSource("http://localhost:8000/api/demo/stream");
+        
+        sse.onopen = () => {
+            retryDelay = 1000; // reset on successful connection
+        };
+
+        sse.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          
+          const isSectorEvent = data.competitor.startsWith("SECTOR:");
+          const sectorName = isSectorEvent ? data.competitor.replace("SECTOR: ", "") : null;
+          
+          if (isSectorEvent) {
+              if (sectorName !== activeSector.toUpperCase()) return;
+          } else {
+              const targets = SECTOR_TARGETS[activeSector];
+              if (typeof data.competitor === 'string' && Array.isArray(targets) && !targets.includes(data.competitor as string)) return;
+          }
+          
+          setWatcherState(data.state);
+          if (data.watch_cycle_id) {
+              setCurrentCycle(data.watch_cycle_id);
+          }
+          
+          const logMsg = `[${getTimestamp(data.timestamp)}] [${data.competitor}] [${data.state}] ${data.message}`;
+          setOperationalFeed(prev => {
+              const newFeed = [logMsg, ...prev];
+              return newFeed.slice(0, 50); // Keep last 50 events
+          });
+
+          if (data.telemetry) setTelemetry(data.telemetry);
+          if (data.diff) setDiffData(data.diff);
+          if (data.scores) setScores(data.scores);
+          if (data.inference_telemetry) setInferenceMeta(data.inference_telemetry);
+          
+          // Correlated Event Tracker updates
+          if (data.state === 'ESCALATING') {
+              setEventMeta({
+                  event_id: data.event_id,
+                  watch_cycle_id: data.watch_cycle_id,
+                  snapshot_version: data.snapshot_version,
+                  escalation_threshold: data.escalation_threshold || "75%"
+              });
+              setGovernanceState("GOVERNANCE_FROZEN");
+              setGovernancePulse(true);
+          }
+          if (data.state === "STRATEGIC_MARKET_CONVERGENCE") {
+              fetchGraphState(); // Refresh graph on convergence
+          }
+        };
+
+        sse.onerror = () => {
+            sse.close();
+            retryDelay = Math.min(retryDelay * 2, maxRetryDelay);
+            reconnectTimeout = setTimeout(connectSSE, retryDelay);
+        };
+    };
+
+    connectSSE();
+    
+    return () => {
+      if (sse) sse.close();
+      clearTimeout(reconnectTimeout);
+    };
+  }, [activeSector, sessionMode, SECTOR_TARGETS, fetchGraphState]);
+
+
+  useEffect(() => {
+      setTimeout(() => {
+          fetchTargets();
+          fetchGraphState();
+          fetchSynthesisBrief();
+          fetchReviewQueue();
+          fetchGovernanceTargets();
+      }, 0);
+      
+      const interval = setInterval(() => {
+          fetchGraphState();
+      }, 15000);
+      const synthInterval = setInterval(() => {
+          fetchSynthesisBrief();
+      }, 30000); // Poll synthesis every 30s
+      return () => { clearInterval(interval); clearInterval(synthInterval); };
+  }, [fetchTargets, fetchGraphState, fetchSynthesisBrief, fetchReviewQueue, fetchGovernanceTargets]);
+
+  useEffect(() => {
+      const config = ROLE_NAVIGATION_MAP[activeRole];
+      let updatedMode = masterMode;
+      
+      if (!config.allowedModes.includes(masterMode)) {
+          updatedMode = config.defaultMode;
+          setMasterMode(updatedMode);
+          setActiveTab(config.defaultViews[updatedMode] || "");
+      } else {
+          if (!config.isExecutiveBypass) {
+              const allowedTabs = config.modeViews[masterMode].map(v => v.id);
+              if (activeTab && !allowedTabs.includes(activeTab)) {
+                  setActiveTab(config.defaultViews[masterMode] || "");
+              }
+          }
+      }
+      
+      // Re-fetch context if role changes
+      setGraphState({nodes: [], edges: []});
+      setSynthesisBrief(null);
+      fetchGraphState();
+      fetchSynthesisBrief();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRole]); // Intentionally only reacting to activeRole to prevent infinite loop
+
+  // Dynamically calculate readiness score during render cycle
+  let readinessScoreNum = 100.0;
+  if (inferenceMeta?.provider_health !== 'AVAILABLE') readinessScoreNum -= 15.0;
+  if (['ESCALATING', 'RECOVERING'].includes(watcherState)) readinessScoreNum -= 5.0;
+  const readinessScore = readinessScoreNum.toFixed(1);
+
+  // Keep manual run for testing
+  const handleManualOverride = async (overrideTarget: string = "Notion") => {
+    setOperationalFeed(prev => [`[${getTimestamp()}] [MANUAL] Initiating forced override on ${overrideTarget}`, ...prev]);
+    try {
+      const res = await nexusFetch("http://localhost:8000/api/demo/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ competitor: overrideTarget, url: `https://www.${overrideTarget.toLowerCase()}.com/pricing`, force_fallback: chaosMode, scenario: "pricing_change" })
+      });
+      const data = await res.json();
+      setTimeline(data.timeline || []);
+      setGovernanceState("APPROVED");
+      setGovernancePulse(false);
+      if (data.pdf_url) {
+        setPdfUrl(`http://localhost:8000${data.pdf_url}`);
+      }
+    } catch (e) {
+      console.error(e);
+      setGovernanceState("REJECTED");
+      setGovernancePulse(false);
+    }
+  };
+
+  const handleTemporalChange = (date: string) => {
+      setTemporalTarget(date);
+      fetchGraphState(date);
+      fetchSynthesisBrief(date);
+  };
+
+  return (
+    <div className={`h-screen w-screen transition-colors duration-1000 font-sans selection:bg-zinc-800 flex flex-col overflow-hidden ${sessionMode === "REPLAY" ? "bg-[#0b0c10] text-slate-300" : "bg-transparent text-zinc-50"}`}>
+      
+      {sessionMode === "REPLAY" && (
+        <div className="absolute top-20 right-8 text-[10px] font-mono tracking-widest text-cyan-600/60 uppercase pointer-events-none z-50 animate-pulse">
+            Historical Reconstruction / State Timestamp: {temporalTarget ? new Date(temporalTarget).toISOString() : "N/A"}
+        </div>
+      )}
+      
+      {/* Top Banner: Institutional State */}
+      <div className="bg-black/40 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center px-8 shrink-0 z-10 relative">
+        <div className="flex gap-8">
+            <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Role</span>
+                <select value={activeRole} onChange={e => setActiveRole(e.target.value as Role)} className="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 outline-none hover:bg-white/10 transition-colors">
+                    <option className="bg-zinc-900" value="SYSTEM_ADMIN">System Admin</option>
+                    <option className="bg-zinc-900" value="EXECUTIVE">Executive</option>
+                    <option className="bg-zinc-900" value="GOVERNANCE">Governance</option>
+                    <option className="bg-zinc-900" value="ANALYST">Analyst</option>
+                    <option className="bg-zinc-900" value="OBSERVER">Observer</option>
+                </select>
+            </div>
+            
+            <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => {
+                      if (sessionMode === "LIVE") {
+                          setSessionMode("REPLAY");
+                          if (timeline.length > 0) handleTemporalChange(timeline[timeline.length - 1].date as string);
+                      } else {
+                          setSessionMode("LIVE");
+                          setTemporalTarget(null);
+                          fetchGraphState();
+                          fetchSynthesisBrief();
+                      }
+                  }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide border transition-all ${sessionMode === "REPLAY" ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' : 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-white/5'}`}
+                >
+                  <History className="w-3.5 h-3.5 inline mr-2" />
+                  {sessionMode === "REPLAY" ? "EXIT ARCHIVE" : "TEMPORAL REPLAY"}
+                </button>
+            </div>
+            
+            
+            <div className="flex items-center gap-3 border-l border-white/10 pl-8">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Workspace</span>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <select value={activeTenant} onChange={e => handleTenantSwap(e.target.value as any)} className="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 outline-none hover:bg-white/10 transition-colors">
+                    <option className="bg-zinc-900" value="tenant_public">Public Market Intel</option>
+                    <option className="bg-zinc-900" value="tenant_sandbox">Classified Sandbox</option>
+                </select>
+            </div>
+            
+            <div className="flex flex-col justify-center ml-4">
+                <span className={`text-[10px] font-mono tracking-[0.2em] font-semibold ${activeTenant === 'tenant_public' ? 'text-indigo-400/80' : 'text-red-500/80'}`}>
+                    {activeTenant === 'tenant_public' ? 'CLASSIFICATION: OPEN STRATEGIC' : 'CLASSIFICATION: RESTRICTED COGNITIVE DOMAIN'}
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">ISOLATION STATUS: VERIFIED</span>
+                </div>
+            </div>
+        </div>
+        
+        <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Session</span>
+                <select value={sessionMode} onChange={e => setSessionMode(e.target.value)} className="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 outline-none hover:bg-white/10 transition-colors">
+                    <option className="bg-zinc-900" value="LIVE">Live Network</option>
+                    <option className="bg-zinc-900" value="REPLAY">Historical Replay</option>
+                    <option className="bg-zinc-900" value="SANDBOX">Sandbox</option>
+                    <option className="bg-zinc-900" value="CHAOS">Chaos Mode</option>
+                </select>
+            </div>
+        </div>
+      </div>
+
+      <div className={`flex-1 flex overflow-hidden relative ${activeTenant === 'tenant_public' ? 'border-t border-indigo-500/20' : 'border-t border-red-500/20'}`}>
+        <AnimatePresence>
+            {isSwappingTenant && (
+               <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute inset-0 z-50 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center"
+               >
+                  <RefreshCw className="w-8 h-8 text-zinc-500 animate-spin mb-4" />
+                  <div className="font-mono text-sm tracking-[0.2em] text-zinc-400 uppercase">Flushing Cognitive State</div>
+                  <div className="font-mono text-xs text-zinc-600 mt-2">Connecting to isolated domain...</div>
+               </motion.div>
+            )}
+        </AnimatePresence>
+        {/* Sidebar Container */}
+      <div className="flex flex-col border-r border-white/5 bg-black/20 backdrop-blur-md relative z-10">
+      {/* Master Mode Toggles */}
+      {activeRole !== "EXECUTIVE" && (
+      <div className="flex p-4 gap-2 border-b border-white/5 shrink-0 bg-white/[0.02]">
+        {(["OPERATIONS", "INTELLIGENCE", "SIMULATION"] as MasterMode[]).map((mode) => {
+           const isAllowed = ROLE_NAVIGATION_MAP[activeRole].allowedModes.includes(mode);
+           return (
+             <button 
+               key={mode}
+               onClick={() => {
+                 if (isAllowed) {
+                   setMasterMode(mode); 
+                   setActiveTab(ROLE_NAVIGATION_MAP[activeRole].defaultViews[mode] || "");
+                 }
+               }} 
+               className={`flex-1 py-2 px-3 rounded-md text-[10px] font-semibold tracking-wide transition-colors ${masterMode === mode ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"} ${!isAllowed ? "opacity-30 cursor-not-allowed" : ""}`}
+             >
+               {mode.charAt(0) + mode.slice(1).toLowerCase()} {isAllowed ? "" : "🔒"}
+             </button>
+           );
+        })}
+      </div>
+      )}
+      
+      {/* Dynamic Sidebar Content */}
+      {activeRole !== "EXECUTIVE" && (
+      <div className="w-72 p-6 flex flex-col shrink-0 h-full">
+        <div className="flex items-center gap-4 mb-10 pb-6 border-b border-white/5">
+          <div className={`p-2 rounded-lg ${masterMode === "OPERATIONS" ? "bg-indigo-500/20 text-indigo-400" : "bg-emerald-500/20 text-emerald-400"}`}>
+             <Activity className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="font-bold text-xl text-white tracking-tight">NEXUS</h1>
+            <p className="text-xs font-medium text-zinc-500 mt-1">{masterMode === "OPERATIONS" ? "Mesh Orchestration" : masterMode === "INTELLIGENCE" ? "Cognitive Governance" : "Strategic Projection"}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-8">
+          <div>
+            <h3 className="text-xs font-semibold text-zinc-500 tracking-widest mb-4 uppercase">
+              {masterMode === "OPERATIONS" ? "Runtime Environment" : masterMode === "INTELLIGENCE" ? "Strategic Memory" : "Future Sandbox"}
+            </h3>
+            <div className="space-y-1">
+              {ROLE_NAVIGATION_MAP[activeRole].modeViews[masterMode]?.map((view) => {
+                 return (
+                   <button 
+                     key={view.id}
+                     onClick={() => setActiveTab(view.id)} 
+                     className={`w-full text-left px-4 py-2.5 rounded-md text-sm font-medium flex items-center justify-between transition-colors ${activeTab === view.id ? 'institutional-glow text-white shadow-sm bg-white/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}
+                   >
+                     <div className="flex items-center gap-3">
+                       <span className="truncate">{view.label}</span>
+                     </div>
+                     {view.id === "governance" && reviewQueue.length > 0 && <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold shrink-0">{reviewQueue.length}</span>}
+                   </button>
+                 );
+              })}
+            </div>
+          </div>
+        </div>
+        </div>
+      )}
+      </div>
+
+      {/* Main Workspace */}
+      <div className={`flex-1 flex flex-col ${activeRole === 'EXECUTIVE' ? 'p-0' : 'p-6'} overflow-y-auto`}>
+         {activeRole === "EXECUTIVE" ? (
+            <ExecutiveView 
+              watcherState={watcherState}
+              governanceState={governanceState}
+              readinessScore={readinessScore}
+              masterMode={masterMode}
+              setMasterMode={setMasterMode}
+              synthesisBrief={synthesisBrief}
+              isSynthesizing={isSynthesizing}
+              fetchSynthesisBrief={fetchSynthesisBrief}
+              graphState={graphState}
+              simTarget={simTarget}
+              setSimTarget={setSimTarget}
+              simMutation={simMutation}
+              setSimMutation={setSimMutation}
+              simHorizon={simHorizon}
+              setSimHorizon={setSimHorizon}
+              simTrajectory={simTrajectory}
+              setSimTrajectory={setSimTrajectory}
+              simulationResult={simulationResult}
+              isSimulating={isSimulating}
+              runSimulation={runSimulation}
+            />
+         ) : (
+            <>
+               {/* Top Control Bar */}
+               <div className="flex justify-between items-center mb-8 bg-white/[0.01] border border-white/5 p-4 rounded-xl shadow-sm">
+                 <div className="flex gap-4">
+                     {ROLE_NAVIGATION_MAP[activeRole].modeViews[masterMode]?.map(view => (
+                         <button 
+                             key={view.id}
+                             onClick={() => setActiveTab(view.id)}
+                             className={`px-4 py-2 rounded-md text-xs font-semibold tracking-wide transition-colors ${activeTab === view.id ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+                         >
+                             {view.label}
+                         </button>
+                     ))}
+                 </div>
+                 <div className="flex items-center gap-6">
+                     <button
+                        onClick={() => setIsFocusMode(!isFocusMode)}
+                        className={`text-xs font-semibold uppercase tracking-widest transition-colors flex items-center gap-2 px-3 py-1.5 rounded-md ${isFocusMode ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}
+                     >
+                        <Search className="w-4 h-4" /> Focus
+                     </button>
+                     <select 
+                       className="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-sm font-medium text-zinc-300 outline-none hover:bg-white/10 transition-colors"
+                       value={activeSector}
+                       onChange={(e) => setActiveSector(e.target.value)}
+                     >
+                       {Object.keys(SECTOR_TARGETS).map(s => <option className="bg-zinc-900" key={s} value={s}>{s}</option>)}
+                     </select>
+                 </div>
+               </div>
+
+
+          {(() => {
+            const allowedViews = ROLE_NAVIGATION_MAP[activeRole]?.modeViews[masterMode]?.map(v => v.id) || [];
+            const isViewAllowed = allowedViews.includes(activeTab);
+            if (!isViewAllowed) {
+                return (
+                   <div className="flex-1 flex flex-col items-center justify-center font-mono text-sm text-zinc-500 uppercase tracking-widest gap-6 m-4 glass-panel border border-zinc-800/50">
+                      <Lock className="w-12 h-12 text-zinc-700 opacity-50 mb-2" />
+                      <div className="text-center">
+                        <p className="text-zinc-400 mb-2 text-base font-semibold">Workspace Unavailable</p>
+                        <p className="text-xs text-zinc-600">The requested intelligence vector is restricted or inactive for the <span className="text-indigo-500">{activeRole}</span> clearance level.</p>
+                      </div>
+                   </div>
+                );
+            }
+            return (
+              <>
+                 {activeTab === "strategic_synthesis" && (
+              <div className="flex-1 flex flex-col min-h-0 relative glass-panel p-8 overflow-y-auto">
+                 <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-6">
+                    <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-indigo-400" /> Executive Strategic Synthesis
+                    </h2>
+                    <div className="flex gap-4">
+                        <span className="text-xs font-semibold bg-white/5 px-3 py-1.5 rounded-md border border-white/5 text-zinc-400 uppercase tracking-widest">
+                            Provider: {(synthesisBrief?.provider as string) || "STANDBY"}
+                        </span>
+                        <button onClick={() => fetchSynthesisBrief()} className="bg-white/5 hover:bg-white/10 text-zinc-300 text-xs px-3 py-1.5 rounded-md border border-white/5 flex items-center gap-2 transition-colors font-semibold">
+                            <RefreshCw className={`w-4 h-4 ${isSynthesizing ? 'animate-spin text-indigo-400' : ''}`} /> Refresh Brief
+                        </button>
+                    </div>
+                 </div>
+                 
+                 {!synthesisBrief ? (
+                    <div className="flex-1 flex items-center justify-center font-mono text-sm text-zinc-600 tracking-widest uppercase">
+                        Awaiting Cognitive Synthesis...
+                    </div>
+                 ) : (
+                    <div className="grid grid-cols-12 gap-8">
+                        <div className="col-span-8">
+                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-widest mb-6">Strategic Narrative</h3>
+                            <div className="text-zinc-300 leading-relaxed font-sans text-base space-y-6">
+                                {synthesisBrief.strategic_narrative as string}
+                            </div>
+                            
+                            {(synthesisBrief.contradictions_detected as string[]) && (synthesisBrief.contradictions_detected as string[]).length > 0 && (
+                                <div className="mt-12 glass-panel p-6 border-l-2 border-rose-500">
+                                    <h3 className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Activity className="w-4 h-4" /> Divergence Alerts
+                                    </h3>
+                                    <ul className="space-y-3">
+                                        {(synthesisBrief.contradictions_detected as string[]).map((alert: string, idx: number) => (
+                                            <li key={idx} className="text-zinc-300 font-mono text-xs flex items-start gap-3">
+                                                <span className="text-rose-500 mt-0.5">■</span> {alert}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="col-span-4 space-y-8">
+                            <div>
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Evidence Sufficiency</h3>
+                                <div className="glass-panel p-5 space-y-4">
+                                    <div className="flex justify-between items-end border-b border-white/5 pb-3">
+                                        <span className="text-xs font-medium text-zinc-500">Synthesis Confidence</span>
+                                        <span className={`text-sm font-bold ${(synthesisBrief.synthesis_confidence as number) > 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                            {synthesisBrief.synthesis_confidence as number}%
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-end border-b border-white/5 pb-3">
+                                        <span className="text-xs font-medium text-zinc-500">Evidence Count</span>
+                                        <span className="text-sm font-bold text-zinc-200">{synthesisBrief.evidence_count as number}</span>
+                                    </div>
+                                    <div className="flex justify-between items-end border-b border-white/5 pb-3">
+                                        <span className="text-xs font-medium text-zinc-500">Temporal Support</span>
+                                        <span className="text-sm font-bold text-zinc-200">{synthesisBrief.temporal_support as string}</span>
+                                    </div>
+                                    <div className="flex justify-between items-end pt-1">
+                                        <span className="text-xs font-medium text-zinc-500">Reasoning Scope</span>
+                                        <span className="text-[10px] font-mono bg-white/10 px-2 py-1 rounded-md text-zinc-300 border border-white/10">{synthesisBrief.reasoning_scope as string}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {(synthesisBrief.evidence_anchors as string[]) && (synthesisBrief.evidence_anchors as string[]).length > 0 && (
+                                <div>
+                                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Evidence Anchors</h3>
+                                    <div className="glass-panel p-5 space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                                        {(synthesisBrief.evidence_anchors as string[]).map((anchor: string, idx: number) => (
+                                            <div key={idx} className="bg-white/5 p-3 rounded-md border border-white/5 font-mono text-xs text-zinc-400 break-all leading-relaxed">
+                                                {anchor}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                 )}
+              </div>
+          )}
+              
+          {activeTab === "governance" && (
+            <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+               <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h2 className="text-sm font-sans tracking-[0.2em] uppercase text-zinc-500 flex items-center gap-3">
+                     <Shield className="w-5 h-5 text-blue-500" /> Institutional Arbitration Queue
+                   </h2>
+                   <p className="text-[10px] font-mono text-zinc-500 mt-2 uppercase">Pending Strategic Policy Decisions</p>
+                 </div>
+                 <button onClick={fetchReviewQueue} className="px-3 py-1.5 border border-white/10 hover:bg-white/5 rounded text-xs font-mono text-zinc-300 flex items-center gap-2 transition-colors">
+                   <RefreshCw className="w-3 h-3" /> Refresh Queue
+                 </button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto min-h-0 pr-4 custom-scrollbar space-y-4">
+                 {reviewQueue && reviewQueue.length > 0 ? (
+                    reviewQueue.map((item, idx) => (
+                      <div key={idx} className="border border-white/10 bg-black/40 rounded-lg p-5 flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-[10px] font-mono text-blue-400 mb-1 uppercase tracking-widest">Review ID: {String(item.id)}</div>
+                            <h3 className="text-sm font-medium text-zinc-200">{String(item.context || "Unspecified Action")}</h3>
+                          </div>
+                          <span className="text-[9px] font-mono border border-amber-500/30 text-amber-500 bg-amber-500/10 px-2 py-1 rounded uppercase">Pending Review</span>
+                        </div>
+                        <div className="text-xs font-mono text-zinc-400 p-3 bg-white/5 rounded border border-white/5">
+                           {JSON.stringify(item.payload, null, 2)}
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2">
+                           <button onClick={() => adjudicate(String(item.id), "REJECT")} className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded text-xs font-mono uppercase tracking-widest transition-colors">
+                             Reject
+                           </button>
+                           <button onClick={() => adjudicate(String(item.id), "APPROVE")} className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-xs font-mono uppercase tracking-widest transition-colors">
+                             Approve
+                           </button>
+                        </div>
+                      </div>
+                    ))
+                 ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-zinc-500">
+                       <ShieldCheck className="w-12 h-12 mb-4 opacity-50" />
+                       <p className="text-sm font-mono uppercase tracking-widest">No Pending Reviews</p>
+                    </div>
+                 )}
+               </div>
+            </div>
+          )}
+
+          {activeTab === "entity_registration" && (
+            <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+               <h2 className="text-sm font-sans tracking-[0.2em] uppercase text-zinc-500 mb-6 flex items-center gap-3">
+                 <Activity className="w-5 h-5 text-emerald-500" /> Target Entity Registration
+               </h2>
+               
+               <div className="grid grid-cols-2 gap-8 flex-1 min-h-0">
+                  <div className="border border-white/10 bg-black/40 p-6 rounded-lg flex flex-col gap-5 overflow-y-auto">
+                    <h3 className="text-xs font-mono text-zinc-400 uppercase tracking-widest border-b border-white/10 pb-3">Register New Target</h3>
+                    <form onSubmit={handleAddTarget} className="flex flex-col gap-4">
+                      <div>
+                        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block mb-1.5">Entity Name</label>
+                        <input type="text" required value={newTargetCompany} onChange={e => setNewTargetCompany(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 outline-none focus:border-emerald-500/50" placeholder="e.g. Acme Corp" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block mb-1.5">Primary URL</label>
+                        <input type="url" required value={newTargetUrl} onChange={e => setNewTargetUrl(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 outline-none focus:border-emerald-500/50" placeholder="https://..." />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block mb-1.5">Sector Classification</label>
+                        <input type="text" required value={newTargetSector} onChange={e => setNewTargetSector(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 outline-none focus:border-emerald-500/50" placeholder="e.g. AI Research" />
+                      </div>
+                      <button type="submit" disabled={isAddingTarget} className="mt-4 w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 py-2.5 rounded text-xs font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                         {isAddingTarget ? <RefreshCw className="w-4 h-4 animate-spin" /> : <DatabaseZap className="w-4 h-4" />}
+                         {isAddingTarget ? "Registering..." : "Initialize Registration"}
+                      </button>
+                    </form>
+                  </div>
+                  
+                  <div className="border border-white/10 bg-black/40 p-6 rounded-lg flex flex-col min-h-0">
+                    <h3 className="text-xs font-mono text-zinc-400 uppercase tracking-widest border-b border-white/10 pb-3 mb-4">Tracked Entities</h3>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+                       {rawTargets.length > 0 ? rawTargets.map((t, idx) => (
+                         <div key={idx} className="bg-zinc-900/50 border border-white/5 p-3 rounded flex justify-between items-center">
+                           <div>
+                             <div className="text-xs font-semibold text-zinc-200">{String(t.company)}</div>
+                             <div className="text-[10px] font-mono text-zinc-500 mt-1">{String(t.sector)}</div>
+                           </div>
+                           <div className="text-[9px] font-mono bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 uppercase">
+                             {String(t.status || 'ACTIVE')}
+                           </div>
+                         </div>
+                       )) : (
+                         <div className="text-xs font-mono text-zinc-500 text-center mt-10 uppercase">No entities found.</div>
+                       )}
+                    </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {activeTab === "logical_nodes" && (
+            <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+               <h2 className="text-sm font-sans tracking-[0.2em] uppercase text-zinc-500 mb-6 flex items-center gap-3">
+                 <Server className="w-5 h-5 text-indigo-500" /> Logical Nodes Directory
+               </h2>
+               
+               <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                 {graphState && graphState.nodes && graphState.nodes.length > 0 ? (
+                    graphState.nodes.map((node, idx) => (
+                      <div key={idx} className="border border-indigo-500/20 bg-indigo-950/10 p-4 rounded-lg flex flex-col gap-2 relative overflow-hidden group hover:border-indigo-500/50 transition-colors">
+                        <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                          <Network className="w-16 h-16 text-indigo-500/20 -mt-4 -mr-4" />
+                        </div>
+                        <div className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">{String(node.id).substring(0, 8)}...</div>
+                        <h3 className="text-sm font-bold text-zinc-200 truncate pr-8">{String(node.name)}</h3>
+                        <div className="text-xs text-zinc-500 truncate">{String(node.sector)}</div>
+                      </div>
+                    ))
+                 ) : (
+                    <div className="col-span-full h-full flex flex-col items-center justify-center text-zinc-600">
+                       <Server className="w-12 h-12 mb-4 opacity-50" />
+                       <p className="text-sm font-mono uppercase tracking-widest">No Nodes Initialized</p>
+                    </div>
+                 )}
+               </div>
+            </div>
+          )}
+
+          {activeTab === "integrity" && (
+             <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+                 <IntegrityPanel reviewQueue={reviewQueue} />
+             </div>
+          )}
+
+          {activeTab === "topology" && (
+            <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 transition-all duration-500">
+               <div className="col-span-9 glass-panel overflow-hidden relative">
+                   <div className="absolute inset-0 bg-black/50" />
+               </div>
+               <div className="col-span-3 flex flex-col gap-6 overflow-y-auto">
+                   <div className="glass-panel p-6">
+                       <h3 className="text-xs font-bold text-zinc-500 tracking-widest uppercase mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-500" /> Sector Health State</h3>
+                       <div className="flex justify-between items-center mb-4">
+                           <span className="text-sm font-medium text-zinc-400">Sector Stability</span>
+                           <span className="text-xs font-bold bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20">NOMINAL</span>
+                       </div>
+                       <div className="flex justify-between items-center mb-4">
+                           <span className="text-sm font-medium text-zinc-400">Convergence Pressure</span>
+                           <span className="text-xs font-bold bg-white/5 text-zinc-500 px-2 py-1 rounded border border-white/5">LOW</span>
+                       </div>
+                       <div className="flex justify-between items-center">
+                           <span className="text-sm font-medium text-zinc-400">Strategic Volatility</span>
+                           <span className="text-xs font-bold text-zinc-300">STABLE</span>
+                       </div>
+                   </div>
+                   <div className="glass-panel p-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                       <h3 className="text-xs font-bold text-zinc-500 tracking-widest uppercase mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-cyan-500" /> Operational Feed</h3>
+                       <div className="flex flex-col gap-4 font-mono text-xs">
+                           <div className="text-emerald-500/90 leading-relaxed">[12:43:29.117] [Monday]<br/>[DEGRADED] Upstream degradation. Recovery pipeline active.</div>
+                           <div className="text-emerald-500/90 leading-relaxed">[12:43:29.085] [Monday]<br/>[ACTIVE] Initiating Cycle 91...</div>
+                           <div className="text-emerald-500/90 leading-relaxed">[12:43:13.750] [Airtable]<br/>[DEGRADED] Upstream degradation. Recovery pipeline active.</div>
+                       </div>
+                   </div>
+               </div>
+            </div>
+          )}
+
+          {activeTab === "strategic_memory" && (
+               <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+                    <h2 className="text-sm font-sans tracking-[0.2em] uppercase text-zinc-500 mb-6 flex items-center gap-3">
+                      <Network className="w-5 h-5 text-blue-500" /> Strategic Knowledge Graph
+                    </h2>
+                    
+                    <div className="flex-1 flex items-center justify-center relative min-h-0 overflow-hidden border border-white/5 bg-black/40 rounded-lg">
+                        {isGraphLoading ? (
+                           <div className="flex flex-col items-center justify-center gap-4">
+                               <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+                               <span className="text-xs font-mono text-indigo-400 tracking-widest uppercase">Synthesizing Topology...</span>
+                           </div>
+                        ) : (
+                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/10 via-black to-black opacity-60 flex items-center justify-center text-zinc-700 font-mono tracking-widest text-xs uppercase">No Nodes Mapped</div>
+                        )}
+                    </div>
+                    
+                    {sessionMode === "REPLAY" && (
+                       <div className="mt-6 border border-white/10 bg-black/50 p-6 rounded-lg relative overflow-hidden">
+                           <div className="flex justify-between items-center mb-4">
+                               <span className="text-xs font-mono text-zinc-400 tracking-widest uppercase">Strategic Timeline Replay</span>
+                               <span className="text-xs font-mono text-zinc-300">T - {30 - temporalDay} Days</span>
+                           </div>
+                           <input type="range" min="0" max="30" value={temporalDay} onChange={(e) => setTemporalDay(parseInt(e.target.value))} className="w-full accent-blue-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer" />
+                           <div className="flex justify-between px-1 mt-2">
+                               <span className="text-[10px] font-mono text-zinc-600">-30D</span>
+                               <span className="text-[10px] font-mono text-emerald-500">LIVE</span>
+                           </div>
+                       </div>
+                    )}
+               </div>
+          )}
+
+          {activeTab === "scenario_sandbox" && (
+             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden rounded-xl">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                      <Zap className="w-4 h-4" /> Scenario Sandbox
+                    </h2>
+                    <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+                    <p className="text-[9px] font-mono text-amber-500/80 mt-2 border border-amber-500/20 bg-amber-500/5 px-2 py-1 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+                  </div>
+                  {simulationResult && (
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+                      <div className="text-[10px] font-mono text-blue-400">{(simulationResult as any).fingerprints?.simulation_hash?.substring(0, 16)}...</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+                  <div className="col-span-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+                    <div className="border border-zinc-800 bg-zinc-900/50 p-4 rounded-lg flex flex-col gap-3">
+                      <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Perturbation Variables</h3>
+                      <div>
+                          <label className="text-[9px] text-zinc-500 uppercase font-mono block mb-1">Target Node (Entity)</label>
+                          <input type="text" value={simTarget} onChange={e => setSimTarget(e.target.value)} placeholder="e.g. Notion, OpenAI" className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" />
+                      </div>
+                      <div>
+                          <label className="text-[9px] text-zinc-500 uppercase font-mono block mb-1">Vector Mutation</label>
+                          <select value={simMutation} onChange={e => setSimMutation(e.target.value)} className="w-full bg-black border border-zinc-800 rounded px-3 py-2 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none">
+                              <option value="ACQUISITION">Acquisition</option>
+                              <option value="BANKRUPTCY">Bankruptcy</option>
+                              <option value="MERGER">Merger</option>
+                              <option value="LEADERSHIP_CHANGE">Leadership Change</option>
+                          </select>
+                      </div>
+                      <button onClick={runSimulation} disabled={isSimulating} className="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-mono text-[10px] py-2 rounded uppercase tracking-widest transition-colors flex justify-center items-center gap-2">
+                          {isSimulating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                          {isSimulating ? "Simulating..." : "Execute Projection"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-2 border border-zinc-800 bg-black rounded-lg p-6 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+                      {simulationResult ? (
+                            <div className="flex-1 font-mono text-sm text-zinc-300 whitespace-pre-wrap">
+                                <h4 className="text-blue-400 mb-4 tracking-widest uppercase border-b border-zinc-800 pb-2">Synthesis Results</h4>
+                                
+                                <div className="mb-6">
+                                    <h5 className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Executive Summary</h5>
+                                    <p className="leading-relaxed text-zinc-300">{(simulationResult as any).synthesis?.executive_summary || "No summary available."}</p>
+                                </div>
+
+                                {((simulationResult as any).synthesis?.projected_events || []).length > 0 && (
+                                    <div className="mb-6">
+                                        <h5 className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Events</h5>
+                                        <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+                                            {((simulationResult as any).synthesis?.projected_events).map((event: string, idx: number) => (
+                                                <li key={idx}>{event}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {((simulationResult as any).synthesis?.evidence_anchors || []).length > 0 && (
+                                    <div>
+                                        <h5 className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Evidence Anchors</h5>
+                                        <div className="flex flex-wrap gap-2">
+                                            {((simulationResult as any).synthesis?.evidence_anchors).map((anchor: string, idx: number) => (
+                                                <span key={idx} className="bg-white/5 border border-white/10 px-2 py-1 rounded text-[10px] text-zinc-400">{anchor}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                      ) : (
+                          <div className="flex-1 flex flex-col items-center justify-center text-zinc-600">
+                              <Zap className="w-8 h-8 mb-4 opacity-50" />
+                              <p className="text-xs uppercase tracking-widest">Awaiting Simulation Parameters</p>
+                          </div>
+                      )}
+                  </div>
+                </div>
+             </div>
+          )}
+</>
+            );
+          })()}
+            </>
+         )}
+      </div>
+      </div>
+
+      <AnimatePresence>
+        {sessionMode === "REPLAY" && (
+            <TemporalRail 
+              timeline={timeline as any}
+              activeDate={temporalTarget}
+              onChange={handleTemporalChange}
+              onClose={() => {
+                  setSessionMode("LIVE");
+                  setTemporalTarget(null);
+                  fetchGraphState();
+                  fetchSynthesisBrief();
+              }}
+            />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {systemAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed bottom-8 right-8 z-50 flex flex-col gap-2 p-5 border border-red-900/50 bg-black/95 backdrop-blur-md shadow-[0_0_30px_rgba(220,38,38,0.15)] max-w-md"
+          >
+            <div className="flex items-center gap-3 border-b border-red-900/30 pb-3 mb-1">
+              <ShieldAlert className="w-5 h-5 text-red-500" />
+              <span className="font-mono font-semibold tracking-widest text-red-500 uppercase text-sm">
+                Authorization Denied
+              </span>
+            </div>
+            <p className="font-mono text-sm text-red-400/90 leading-relaxed">
+              {systemAlert.message}
+            </p>
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+

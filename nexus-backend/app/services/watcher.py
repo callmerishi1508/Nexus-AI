@@ -39,10 +39,11 @@ class ContinuousWatcher:
         })
 
         # 1. Fetch
-        browser_context = app_state.browser_context if hasattr(app_state, 'browser_context') else None
-        target_metadata = TargetRegistryService.get_all_targets().get(competitor, {})
+        browser = app_state.browser if hasattr(app_state, 'browser') else None
+        target_dict = await TargetRegistryService.get_all_active_targets()
+        target_metadata = target_dict.get(competitor, {})
         url = target_metadata.get("url", f"https://www.{competitor.lower()}.com/pricing")
-        fetch_result = await safe_fetch_pipeline(competitor, url, browser_context)
+        fetch_result = await safe_fetch_pipeline(competitor, url, browser)
         
         if fetch_result["mode"] == "FALLBACK":
             await self._emit(settings.STATE_DEGRADED, competitor, "Upstream degradation. Recovery pipeline active.")
@@ -130,9 +131,29 @@ class ContinuousWatcher:
                 "watch_cycle_id": cycle_id
             })
 
-    def start(self, app_state):
-        targets = TargetRegistryService.get_all_targets()
-        stagger_delay = 0
+    async def start(self, app_state):
+        self.app_state = app_state
+        # Schedule the reconciliation loop every 15 seconds
+        cognitive_scheduler.scheduler.add_job(
+            self.reconcile_scheduler,
+            'interval',
+            seconds=15,
+            id="scheduler_reconciliation_loop"
+        )
+        # Schedule the decay engine sweep
+        from app.memory.decay import decay_engine
+        cognitive_scheduler.scheduler.add_job(
+            decay_engine.run_decay_sweep,
+            'interval',
+            seconds=300, # 5 minutes
+            id="memory_decay_sweep"
+        )
+        cognitive_scheduler.start()
+        # Run first reconciliation immediately
+        await self.reconcile_scheduler()
+
+    async def reconcile_scheduler(self):
+        targets = await TargetRegistryService.get_all_active_targets()
         
         # Register logical nodes per sector
         sectors = {}
@@ -144,33 +165,28 @@ class ContinuousWatcher:
             
         for sector, tgts in sectors.items():
             node_registry.register_node(f"NODE_{sector.upper().replace(' ', '_')}", tgts)
+            
+        # Get active jobs
+        active_jobs = [j.id for j in cognitive_scheduler.scheduler.get_jobs()]
         
+        stagger_delay = 0
         for target_name, metadata in targets.items():
-            sector = metadata.get("sector", "Unknown")
-            
-            # Staggered deterministic sequencing
-            start_date = datetime.datetime.now() + datetime.timedelta(seconds=stagger_delay)
-            
-            cognitive_scheduler.scheduler.add_job(
-                self.watch_target, 
-                'interval', 
-                seconds=cognitive_scheduler.calculate_priority_interval(target_name, sector),
-                next_run_time=start_date,
-                args=[target_name, app_state],
-                id=f"watch_{target_name}"
-            )
-            stagger_delay += 15 # 15s offset between targets to prevent race chaos
-            
-        # Schedule the decay engine sweep
-        from app.memory.decay import decay_engine
-        cognitive_scheduler.scheduler.add_job(
-            decay_engine.run_decay_sweep,
-            'interval',
-            seconds=300, # 5 minutes
-            id="memory_decay_sweep"
-        )
-            
-        cognitive_scheduler.start()
+            job_id = f"watch_{target_name}"
+            if job_id not in active_jobs:
+                sector = metadata.get("sector", "Unknown")
+                start_date = datetime.datetime.now() + datetime.timedelta(seconds=stagger_delay)
+                cognitive_scheduler.scheduler.add_job(
+                    self.watch_target, 
+                    'interval', 
+                    seconds=metadata.get("polling_interval", 300),
+                    next_run_time=start_date,
+                    args=[target_name, getattr(self, "app_state", None)],
+                    id=job_id
+                )
+                stagger_delay += 15
+                
+                # Update DB state to ASSIGNED (Skipped on startup to prevent SQLite deadlock)
+                # await TargetRegistryService.set_assignment_state(target_name, "ASSIGNED")
 
     def shutdown(self):
         cognitive_scheduler.shutdown()

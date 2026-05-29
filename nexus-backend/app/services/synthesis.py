@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from app.db.models import GovernanceReview
 from app.services.graph.query import export_graph_state
 from app.services.inference_router import inference_router
@@ -61,8 +62,15 @@ class StrategicSynthesisEngine:
             "provider": "DETERMINISTIC_RECOVERY"
         }
 
-    async def generate_brief(self, db: AsyncSession) -> Dict[str, Any]:
-        graph_state = await export_graph_state(db)
+    async def generate_brief(self, db: AsyncSession, tenant_id: str, timestamp: Any = None) -> Dict[str, Any]:
+        # Gather escalating intelligence for this specific tenant
+        reviews = await db.execute(
+            select(GovernanceReview)
+            .where(GovernanceReview.status == "ESCALATED")
+            .where(GovernanceReview.tenant_id == tenant_id)
+            .order_by(GovernanceReview.priority_score.desc())
+        )
+        graph_state = await export_graph_state(db, tenant_id, timestamp)
         
         if not self._assess_evidence_sufficiency(graph_state):
             logger.warning(
@@ -127,11 +135,12 @@ class StrategicSynthesisEngine:
                 }
             )
             
-            parsed = json.loads(result["content"])
+            raw_content = result["content"].replace("```json", "").replace("```", "").strip()
+            parsed = json.loads(raw_content)
             parsed["provider"] = result["provider"]
             
             # Calculate Intelligence Priority Weighting
-            priority_score = parsed.get("synthesis_confidence", 0) * 0.5 + parsed.get("evidence_count", 0) * 10
+            priority_score = int(parsed.get("synthesis_confidence", 0)) * 0.5 + int(parsed.get("evidence_count", 0)) * 10
             
             # Form Governance Review Item
             review_item = GovernanceReview(

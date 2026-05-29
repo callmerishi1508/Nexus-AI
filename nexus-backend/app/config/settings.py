@@ -1,7 +1,10 @@
 from pydantic_settings import BaseSettings
-from typing import Literal
+from typing import Literal, Optional
 
 class Settings(BaseSettings):
+    # Bright Data Infrastructure
+    BRIGHT_DATA_SCRAPING_BROWSER_URL: Optional[str] = None
+    
     # Base Intervals
     SCHEDULER_BASE_INTERVAL_SEC: int = 300
     SCHEDULER_MIN_INTERVAL_SEC: int = 30
@@ -16,6 +19,10 @@ class Settings(BaseSettings):
     INTEGRITY_DRIFT_THRESHOLD: int = 40  # Semantic drift confidence threshold
     INTEGRITY_MIN_EVIDENCE_COUNT: int = 3 # Minimum evidence for synthesis
     INTEGRITY_MIN_CONVERGENCE_SCORE: int = 70
+    
+    # Simulation Eligibility
+    SIMULATION_MINIMUM_SNAPSHOTS: int = 3
+    SIMULATION_MINIMUM_LINEAGE: int = 2
     
     # System Epochs
     CONSTITUTION_VERSION: str = "1.0.0"
@@ -45,5 +52,6 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

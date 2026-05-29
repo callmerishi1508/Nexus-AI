@@ -1,0 +1,24 @@
+{
+  "signals": [
+    {
+      "type": "TIER_REMOVED",
+      "tier_name": "Pro",
+      "severity": 2
+    },
+    {
+      "type": "TIER_REMOVED",
+      "tier_name": "Enterprise",
+      "severity": 2
+    }
+  ],
+  "impact": {
+    "classification": "STABLE",
+    "ontology_version": "v1.0.0",
+    "interpretation_hash": "68ec5ffd0e5f",
+    "signal_count": 2,
+    "primary_signals": [
+      "TIER_REMOVED",
+      "TIER_REMOVED"
+    ]
+  }
+}

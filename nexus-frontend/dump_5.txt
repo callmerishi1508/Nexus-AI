@@ -1,0 +1,53 @@
+Created At: 2026-05-27T12:45:41Z
+Completed At: 2026-05-27T12:45:41Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1276
+Total Bytes: 88748
+Showing lines 1040 to 1110
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1040:                                       </div>
+1041:                                   
+1042:                                   <div className="flex flex-col gap-12">
+1043:                                       {graphState.nodes.filter(n => n.type === 'Company').map(node => (
+1044:                                           <div 
+1045:                                               key={node.id} 
+1046:                                               className="relative z-10 flex flex-col items-center cursor-pointer group"
+1047:                                               onClick={() => setExpandedNodeId(expandedNodeId === node.id ? null : node.id)}
+1048:                                           >
+1049:                                               <div className={`w-12 h-12 rounded border bg-emerald-500/5 flex items-center justify-center text-emerald-400 font-mono text-[10px] text-center p-1 transition-all ${expandedNodeId === node.id ? 'border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.2)]' : 'border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.05)] group-hover:border-emerald-400/50'}`}>
+1050:                                                   {node.name}
+1051:                                               </div>
+1052:                                               <span className="mt-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">{node.type}</span>
+1053:                                               {/* Inline Drilldown Panel */}
+1054:                                               <AnimatePresence>
+1055:                                 
+<truncated 2947 bytes>
+                       )}
+1084:                    </div>
+1085:                 </div>
+1086: 
+1087:                 {/* Temporal Replay Slider */}
+1088:                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[600px] bg-zinc-950 border border-zinc-800 rounded-full px-6 py-3 flex flex-col gap-2 shadow-2xl z-20">
+1089:                     <div className="flex justify-between items-center px-2">
+1090:                         <span className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">Strategic Timeline Replay</span>
+1091:                         <span className="text-[10px] font-mono text-zinc-300">T - {30 - temporalDay} Days</span>
+1092:                     </div>
+1093:                     <input 
+1094:                         type="range" 
+1095:                         min="0" 
+1096:                         max="30" 
+1097:                         value={temporalDay} 
+1098:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+1099:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+1100:                     />
+1101:                     <div className="flex justify-between px-2 mt-1">
+1102:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+1103:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+1104:                     </div>
+1105:                 </div>
+1106:              </div>
+1107:           ) : masterMode === "SIMULATION" ? (
+1108:              /* SCENARIO SANDBOX TAB */
+1109:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+1110:                 <div className="flex justify-between items-start mb-6">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

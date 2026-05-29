@@ -1,0 +1,54 @@
+Created At: 2026-05-27T12:36:59Z
+Completed At: 2026-05-27T12:36:59Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69109
+Showing lines 870 to 990
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+881:                   <div>
+882:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+883:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+884:                     </h2>
+885:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+886:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+887:                   </div>
+888:                   {simulationResult && (
+889:                     <div className="text-right">
+890:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+891:                       <div className="text-[10
+<truncated 6136 bytes>
+                              <span className="text-zinc-500">Inference Load</span>
+969:                                     <span className="text-amber-400">{costEstimate.estimated_inference_load}</span>
+970:                                 </div>
+971:                             </>
+972:                         ) : (
+973:                             <div className="text-[10px] font-mono text-zinc-500">No estimate available.</div>
+974:                         )}
+975:                       </div>
+976:                     </div>
+977:                   </div>
+978: 
+979:                   {/* Right Column: Output */}
+980:                   <div className="col-span-2 flex flex-col gap-4">
+981:                     {simulationResult ? (
+982:                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col gap-4">
+983:                         <div className="grid grid-cols-3 gap-4">
+984:                           <div className="border border-blue-500/30 bg-blue-500/5 p-4 rounded-lg flex flex-col items-center justify-center">
+985:                             <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest mb-1">Confidence</span>
+986:                             <span className="text-3xl font-light text-zinc-100">{simulationResult.confidence.toFixed(1)}%</span>
+987:                           </div>
+988:                           <div className="border border-purple-500/30 bg-purple-500/5 p-4 rounded-lg flex flex-col items-center justify-center">
+989:                             <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest mb-1">Stability Score</span>
+990:                             <span className="text-3xl font-light text-zinc-100">{simulationResult.stability_score.toFixed(1)}%</span>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

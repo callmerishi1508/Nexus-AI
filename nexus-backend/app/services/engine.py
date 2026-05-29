@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from datetime import datetime
-from app.services.inference_router import inference_router
 from app.services.extractors.coordinator import execute_deterministic_extraction
+from app.services.extractor.semantic import extract_pricing_and_features
 
 # =========================================================================
 # NEXUS - SEMANTIC INTELLIGENCE ENGINE (PHASE 6)
@@ -67,7 +67,7 @@ async def extract_semantic_intelligence(markdown_content: str, raw_html: str = "
         inference_telemetry["anomaly_segments_routed"] = 1
         
         # We pass the markdown to LLM to extract ambiguous fields
-        llm_data, llm_telemetry = await inference_router.execute_semantic_extraction(markdown_content)
+        llm_data, llm_telemetry = await extract_pricing_and_features(markdown_content)
         
         inference_telemetry.update(llm_telemetry)
         

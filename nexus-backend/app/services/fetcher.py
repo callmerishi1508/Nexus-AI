@@ -13,12 +13,18 @@ class FetchTimeoutError(Exception):
 class FetchError(Exception):
     pass
 
-async def fetch_markdown_from_playwright(target_url: str, context, telemetry: dict) -> Tuple[str, str]:
+async def fetch_markdown_from_playwright(target_url: str, browser, telemetry: dict) -> Tuple[str, str]:
     """
     Fetches the target URL using a persistent Playwright Chromium pool.
-    Performs deterministic extraction (BS4) before semantic enrichment.
+    Implements Enterprise Connection Pooling: Short-lived context and page per extraction.
     """
     start_time = time.time()
+    context = await browser.new_context(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        viewport={"width": 1920, "height": 1080},
+        java_script_enabled=True,
+        bypass_csp=True
+    )
     page = await context.new_page()
     try:
         try:
@@ -33,6 +39,7 @@ async def fetch_markdown_from_playwright(target_url: str, context, telemetry: di
             raise FetchError(f"Browser navigation error: {str(e)}") from e
     finally:
         await page.close()
+        await context.close()
     
     telemetry["fetch_latency_ms"] = round((time.time() - start_time) * 1000)
     
@@ -58,7 +65,7 @@ async def fetch_markdown_from_playwright(target_url: str, context, telemetry: di
         
     return md, raw_html
 
-async def safe_fetch_pipeline(competitor: str, url: str, browser_context) -> Dict[str, Any]:
+async def safe_fetch_pipeline(competitor: str, url: str, browser) -> Dict[str, Any]:
     """
     The main fetch pipeline that wraps the Playwright fetcher.
     If it fails or times out, it gracefully cascades to the FALLBACK or MOCK system.
@@ -76,7 +83,7 @@ async def safe_fetch_pipeline(competitor: str, url: str, browser_context) -> Dic
     }
     
     try:
-        md_content, raw_html = await fetch_markdown_from_playwright(url, browser_context, result["telemetry"])
+        md_content, raw_html = await fetch_markdown_from_playwright(url, browser, result["telemetry"])
         result["markdown_content"] = md_content
         result["raw_html"] = raw_html
     except FetchTimeoutError as e:

@@ -1,0 +1,1 @@
+{"company": "Company Delta", "timestamp": 1780004243.197186, "impact": {"classification": "STABLE", "primary_signals": ["FEATURE_ADDED"]}, "signals": [{"type": "FEATURE_ADDED", "confidence": 0.4, "severity": 1}]}

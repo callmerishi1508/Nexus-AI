@@ -1,0 +1,737 @@
+Created At: 2026-05-27T11:53:50Z
+Completed At: 2026-05-27T11:53:50Z
+The following changes were made by the replace_file_content tool to: C:\Web Hackathon\nexus-frontend\app\page.tsx. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -808,6 +808,152 @@
+                     </div>
+                 </div>
+              </div>
++          ) : masterMode === "SIMULATION" ? (
++             /* SCENARIO SANDBOX TAB */
++             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
++                <div className="flex justify-between items-start mb-6">
++                  <div>
++                    <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
++                      <Zap className="w-4 h-4" /> Scenario Sandbox
++                    </h2>
++                    <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
++                    <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
++                  </div>
++                  {simulationResult && (
++                    <div className="text-right">
++                      <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
++                      <div className="text-[10px] font-mono text-blue-400">{simulationResult.fingerprints?.simulation_hash.substring(0, 16)}...</div>
++                    </div>
++                  )}
++                </div>
++
++                <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
++                  {/* Left Column: Inputs */}
++                  <div className="col-span-1 flex flex-col gap-4">
++                    <div className="border border-zinc-800 bg-zinc-900/50 p-4 rounded-lg flex flex-c
+<truncated 7412 bytes>
+disc list-inside text-sm text-zinc-300 space-y-1">
++                                {simulationResult.synthesis.projected_events.map((ev: string, i: number) => (
++                                  <li key={i}>{ev}</li>
++                                ))}
++                              </ul>
++                            </div>
++                            
++                            <div className="pt-4 border-t border-zinc-800">
++                              <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Evidence Anchors</h4>
++                              <div className="flex gap-2 flex-wrap">
++                                {simulationResult.synthesis.evidence_anchors.map((ev: string, i: number) => (
++                                  <span key={i} className="text-[9px] font-mono bg-zinc-800 text-zinc-400 px-2 py-1 rounded border border-zinc-700">{ev}</span>
++                                ))}
++                              </div>
++                            </div>
++                          </div>
++                        </div>
++                      </motion.div>
++                    ) : (
++                      <div className="flex-1 border border-zinc-800 border-dashed rounded-lg flex items-center justify-center bg-zinc-900/20">
++                        <div className="text-center">
++                          <Zap className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
++                          <p className="text-sm font-mono text-zinc-500 uppercase tracking-widest">Awaiting Projection Parameters</p>
++                        </div>
++                      </div>
++                    )}
++                  </div>
++                </div>
++             </div>
+           )}
+         </div>
+       </div>
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+
+--------------------------
+
+Created At: 2026-05-27T12:10:20Z
+Completed At: 2026-05-27T12:10:20Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69102
+Showing lines 840 to 890
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+840:                                       ))}
+841:                                   </div>
+842:                                   
+843:                                   {graphState.nodes.filter(n => n.type === 'SectorTrend').map(node => (
+844:                                       <div key={node.id} className="relative z-10 flex flex-col items-center">
+845:                                           <div className="w-24 h-24 rounded-lg border border-rose-500/50 bg-rose-500/10 flex items-center justify-center text-rose-400 font-mono text-[11px] text-center shadow-[0_0_40px_rgba(244,63,94,0.2)] p-3 animate-pulse">
+846:                                               {node.name}
+847:                                           </div>
+848:                                           <span className="mt-2 font-mono text-[9px] text-rose-500/70 uppercase tracking-widest">CONVERGENCE</span>
+849:                                       </div>
+850:                                   ))}
+851:                                </div>
+852:                            </div>
+853:                        )}
+854:                    </div>
+855:                 </div>
+856: 
+857:                 {/* Temporal Replay Slider */}
+858:                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[600px] bg-zinc-950 border border-zinc-800 rounded-full px-6 py-3 flex flex-col gap-2 shadow-2xl z-20">
+859:                     <div className="flex justify-between items-center px-2">
+860:                         <span className="text-[9px] font-mono text-zinc-500 tracking-widest upperc
+<truncated 308 bytes>
+866:                         max="30" 
+867:                         value={temporalDay} 
+868:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+869:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+881:                   <div>
+882:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+883:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+884:                     </h2>
+885:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+886:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+887:                   </div>
+888:                   {simulationResult && (
+889:                     <div className="text-right">
+890:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+Created At: 2026-05-27T12:11:35Z
+Completed At: 2026-05-27T12:11:35Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69102
+Showing lines 865 to 880
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+865:                         min="0" 
+866:                         max="30" 
+867:                         value={temporalDay} 
+868:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+869:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+Created At: 2026-05-27T12:36:59Z
+Completed At: 2026-05-27T12:36:59Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1044
+Total Bytes: 69109
+Showing lines 870 to 990
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+870:                     />
+871:                     <div className="flex justify-between px-2 mt-1">
+872:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+873:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+874:                     </div>
+875:                 </div>
+876:              </div>
+877:           ) : masterMode === "SIMULATION" ? (
+878:              /* SCENARIO SANDBOX TAB */
+879:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+880:                 <div className="flex justify-between items-start mb-6">
+881:                   <div>
+882:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+883:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+884:                     </h2>
+885:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+886:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+887:                   </div>
+888:                   {simulationResult && (
+889:                     <div className="text-right">
+890:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+891:                       <div className="text-[10
+<truncated 6136 bytes>
+                              <span className="text-zinc-500">Inference Load</span>
+969:                                     <span className="text-amber-400">{costEstimate.estimated_inference_load}</span>
+970:                                 </div>
+971:                             </>
+972:                         ) : (
+973:                             <div className="text-[10px] font-mono text-zinc-500">No estimate available.</div>
+974:                         )}
+975:                       </div>
+976:                     </div>
+977:                   </div>
+978: 
+979:                   {/* Right Column: Output */}
+980:                   <div className="col-span-2 flex flex-col gap-4">
+981:                     {simulationResult ? (
+982:                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col gap-4">
+983:                         <div className="grid grid-cols-3 gap-4">
+984:                           <div className="border border-blue-500/30 bg-blue-500/5 p-4 rounded-lg flex flex-col items-center justify-center">
+985:                             <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest mb-1">Confidence</span>
+986:                             <span className="text-3xl font-light text-zinc-100">{simulationResult.confidence.toFixed(1)}%</span>
+987:                           </div>
+988:                           <div className="border border-purple-500/30 bg-purple-500/5 p-4 rounded-lg flex flex-col items-center justify-center">
+989:                             <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest mb-1">Stability Score</span>
+990:                             <span className="text-3xl font-light text-zinc-100">{simulationResult.stability_score.toFixed(1)}%</span>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to.
+
+<SYSTEM_MESSAGE>
+[Message] timestamp=2026-05-27T12:41:48Z sender=fa730d07-7394-46db-a474-f1c54a041eb6/task-407 priority=MESSAGE_PRIORITY_LOW content=Task id "fa730d07-7394-46db-a474-f1c54a041eb6/task-407" was canceled with result:
+Step was canceled: context canceled by manage_task
+			The following output was generated before the cancellation.
+				Output:
+				<truncated 1 lines>
+  878 |              /* SCENARIO SANDBOX TAB */
+  879 |              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zi...
+  880 |                 <div className="flex justify-between items-start mb-6">
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+
+[browser] ./app/page.tsx:877:13
+Expected '</', got ':'
+  875 |                 </div>
+  876 |              </div>
+> 877 |           ) : masterMode === "SIMULATION" ? (
+      |             ^
+  878 |              /* SCENARIO SANDBOX TAB */
+  879 |              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zi...
+  880 |                 <div className="flex justify-between items-start mb-6">
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component] 
+    at handleErrors (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Web Hackathon/nexus-fronten
+<truncated 4760 bytes>
+    <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zi...
+  880 |                 <div className="flex justify-between items-start mb-6">
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./app/page.tsx:877:13)
+    at <unknown> (Error: (./app/page.tsx:877:13)
+[browser] ./app/page.tsx:877:13
+Expected '</', got ':'
+  875 |                 </div>
+  876 |              </div>
+> 877 |           ) : masterMode === "SIMULATION" ? (
+      |             ^
+  878 |              /* SCENARIO SANDBOX TAB */
+  879 |              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zi...
+  880 |                 <div className="flex justify-between items-start mb-6">
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component] 
+    at handleErrors (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+
+
+Log: file:///C:/Users/admin/.gemini/antigravity-ide/brain/fa730d07-7394-46db-a474-f1c54a041eb6/.system_generated/tasks/task-407.log
+</SYSTEM_MESSAGE>
+
+--------------------------
+
+Created At: 2026-05-27T12:42:08Z
+Completed At: 2026-05-27T12:42:09Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1276
+Total Bytes: 88748
+Showing lines 1100 to 1150
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1100:                     />
+1101:                     <div className="flex justify-between px-2 mt-1">
+1102:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+1103:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+1104:                     </div>
+1105:                 </div>
+1106:              </div>
+1107:           ) : masterMode === "SIMULATION" ? (
+1108:              /* SCENARIO SANDBOX TAB */
+1109:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+1110:                 <div className="flex justify-between items-start mb-6">
+1111:                   <div>
+1112:                     <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+1113:                       <Zap className="w-4 h-4" /> Scenario Sandbox
+1114:                     </h2>
+1115:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+1116:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+1117:                   </div>
+1118:                   {simulationResult && (
+1119:                     <div className="text-right">
+1120:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+1121:                       
+<truncated 622 bytes>
+-zinc-400 uppercase tracking-widest">Perturbation Variables</h3>
+1131:                       <div>
+1132:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Target Node</label>
+1133:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simTarget} onChange={e => setSimTarget(e.target.value)}>
+1134:                           <option>Notion</option>
+1135:                           <option>Airtable</option>
+1136:                           <option>Vercel</option>
+1137:                         </select>
+1138:                       </div>
+1139:                       <div>
+1140:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Mutation Type</label>
+1141:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simMutation} onChange={e => setSimMutation(e.target.value)}>
+1142:                           <option>Pricing -15%</option>
+1143:                           <option>Acquisition Attempt</option>
+1144:                           <option>Feature Parity (AI)</option>
+1145:                         </select>
+1146:                       </div>
+1147:                       <div>
+1148:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Temporal Horizon</label>
+1149:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simHorizon} onChange={e => setSimHorizon(e.target.value)}>
+1150:                           <option>SHORT</option>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+Created At: 2026-05-27T12:45:41Z
+Completed At: 2026-05-27T12:45:41Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1276
+Total Bytes: 88748
+Showing lines 1040 to 1110
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1040:                                       </div>
+1041:                                   
+1042:                                   <div className="flex flex-col gap-12">
+1043:                                       {graphState.nodes.filter(n => n.type === 'Company').map(node => (
+1044:                                           <div 
+1045:                                               key={node.id} 
+1046:                                               className="relative z-10 flex flex-col items-center cursor-pointer group"
+1047:                                               onClick={() => setExpandedNodeId(expandedNodeId === node.id ? null : node.id)}
+1048:                                           >
+1049:                                               <div className={`w-12 h-12 rounded border bg-emerald-500/5 flex items-center justify-center text-emerald-400 font-mono text-[10px] text-center p-1 transition-all ${expandedNodeId === node.id ? 'border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.2)]' : 'border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.05)] group-hover:border-emerald-400/50'}`}>
+1050:                                                   {node.name}
+1051:                                               </div>
+1052:                                               <span className="mt-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">{node.type}</span>
+1053:                                               {/* Inline Drilldown Panel */}
+1054:                                               <AnimatePresence>
+1055:                                 
+<truncated 2947 bytes>
+                       )}
+1084:                    </div>
+1085:                 </div>
+1086: 
+1087:                 {/* Temporal Replay Slider */}
+1088:                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[600px] bg-zinc-950 border border-zinc-800 rounded-full px-6 py-3 flex flex-col gap-2 shadow-2xl z-20">
+1089:                     <div className="flex justify-between items-center px-2">
+1090:                         <span className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">Strategic Timeline Replay</span>
+1091:                         <span className="text-[10px] font-mono text-zinc-300">T - {30 - temporalDay} Days</span>
+1092:                     </div>
+1093:                     <input 
+1094:                         type="range" 
+1095:                         min="0" 
+1096:                         max="30" 
+1097:                         value={temporalDay} 
+1098:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+1099:                         className="w-full accent-purple-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+1100:                     />
+1101:                     <div className="flex justify-between px-2 mt-1">
+1102:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+1103:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+1104:                     </div>
+1105:                 </div>
+1106:              </div>
+1107:           ) : masterMode === "SIMULATION" ? (
+1108:              /* SCENARIO SANDBOX TAB */
+1109:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+1110:                 <div className="flex justify-between items-start mb-6">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+Created At: 2026-05-27T12:46:42Z
+Completed At: 2026-05-27T12:46:42Z
+Task: fa730d07-7394-46db-a474-f1c54a041eb6/task-1934
+Status: RUNNING
+Log: C:\Users\admin\.gemini\antigravity-ide\brain\fa730d07-7394-46db-a474-f1c54a041eb6\.system_generated\tasks\task-1934.log
+Log output:
+<truncated 272 lines>
+) : masterMode === "SIMULATION" ? (
+       |             ^
+  1108 |              /* SCENARIO SANDBOX TAB */
+  1109 |              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-z...
+  1110 |                 <div className="flex justify-between items-start mb-6">
+
+Parsing ecmascript source code failed 
+    at handleErrors (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+    at processMessage (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2835:28)
+    at <unknown> (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2680:13)
+    at WebSocket.handleMessage (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2325:17) (file://C:/Web Hackathon/nexus-frontend/.next/dev/static/chunks/node_modules_next_dist_client_0pe1dg-._.js:2774:21)
+
+Last progress: 1m52s ago
+
+
+REMINDER: Do not call this tool again to poll or wait for updates. You will be automatically notified when the task completes or a message arrives. If you need a bounded wait, use the `schedule` tool -- it waits silently in the background and suppresses its notification if you are woken by another event.
+
+--------------------------
+
+Created At: 2026-05-27T19:56:41Z
+Completed At: 2026-05-27T19:56:41Z
+The following changes were made by the multi_replace_file_content tool to: C:\Web Hackathon\nexus-frontend\app\page.tsx. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -509,8 +509,8 @@
+ 
+ 
+           {activeTab === "Strategic Synthesis" ? (
+-              <div className="flex-1 flex flex-col min-h-0 relative border border-zinc-800 bg-zinc-950 rounded-lg p-8 overflow-y-auto">
+-                 <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
++              <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-y-auto">
++                 <div className="flex justify-between items-center mb-8 border-b border-[#1a2230] pb-6">
+                     <h2 className="text-xl font-light text-zinc-200 uppercase tracking-widest flex items-center gap-3">
+                       <FileText className="w-5 h-5 text-blue-500" /> Executive Strategic Synthesis
+                     </h2>
+@@ -857,9 +857,9 @@
+           </div>
+           ) : activeTab === "Strategic Memory" ? (
+              /* STRATEGIC MEMORY TAB */
+-             <div className="flex-1 flex flex-col min-h-0 relative border border-zinc-800 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
+-                <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-widest mb-6 flex items-center gap-2">
+-                  <Network className="w-4 h-4 text-blue-500" /> Strategic Knowledge Graph
++             <div className="flex-1 flex flex-col min-h-0 relative border border-[#1a2230] bg-[#0b0f14] p-8 overflow-hidden">
++                <h2 className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-6 flex items-center gap-2">
++                  <Network className="w-3 h-3 text-blue-500/70" /> Strategic Knowledge Graph
+                 </h2>
+                 
+                 {/* Minimal Palantir-style Graph Canvas */}
+@@ -981,11 +981,11 @@
+              </div>
+           ) : masterMode === "SIMULATION" ? (
+              /* SCENARIO SANDBOX TAB */
+-             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-zinc-950/80 rounded-lg p-8 overflow-hidden">
++             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+                 <div className="flex justify-between items-start mb-6">
+                   <div>
+-                    <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+-                      <Zap className="w-4 h-4" /> Scenario Sandbox
++                    <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
++                      <Zap className="w-3 h-3" /> Scenario Sandbox
+                     </h2>
+                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+
+--------------------------
+
+Created At: 2026-05-27T21:36:48Z
+Completed At: 2026-05-27T21:36:49Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1554
+Total Bytes: 98476
+Showing lines 1350 to 1400
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1350:              /* SCENARIO SANDBOX TAB */
+1351:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+1352:                 <div className="flex justify-between items-start mb-6">
+1353:                   <div>
+1354:                     <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+1355:                       <Zap className="w-3 h-3" /> Scenario Sandbox
+1356:                     </h2>
+1357:                     <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+1358:                     <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+1359:                   </div>
+1360:                   {simulationResult && (
+1361:                     <div className="text-right">
+1362:                       <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+1363:                       <div className="text-[10px] font-mono text-blue-400">{simulationResult.fingerprints?.simulation_hash.substring(0, 16)}...</div>
+1364:                     </div>
+1365:                   )}
+1366:                 </div>
+1367: 
+1368:                 <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+1369:                   {/* Left Column: Inputs */}
+1370:                   <div className="col-span-1 flex flex-col gap-4">
+1371:                   
+<truncated 855 bytes>
+</select>
+1380:                       </div>
+1381:                       <div>
+1382:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Mutation Type</label>
+1383:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simMutation} onChange={e => setSimMutation(e.target.value)}>
+1384:                           <option>Pricing -15%</option>
+1385:                           <option>Acquisition Attempt</option>
+1386:                           <option>Feature Parity (AI)</option>
+1387:                         </select>
+1388:                       </div>
+1389:                       <div>
+1390:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Temporal Horizon</label>
+1391:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simHorizon} onChange={e => setSimHorizon(e.target.value)}>
+1392:                           <option>SHORT</option>
+1393:                           <option>MEDIUM</option>
+1394:                           <option>LONG</option>
+1395:                         </select>
+1396:                       </div>
+1397:                       <div>
+1398:                         <label className="text-[9px] font-mono text-zinc-500 uppercase block mb-1">Trajectory Hypothesis</label>
+1399:                         <select className="w-full bg-zinc-950 border border-zinc-800 rounded p-1.5 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none" value={simTrajectory} onChange={e => setSimTrajectory(e.target.value)}>
+1400:                           <option>COMPRESSION</option>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+--------------------------
+
+Created At: 2026-05-28T12:20:45Z
+Completed At: 2026-05-28T12:20:45Z
+File Path: `file:///C:/Web%20Hackathon/nexus-frontend/app/page.tsx`
+Total Lines: 1618
+Total Bytes: 104151
+Showing lines 800 to 1599
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+800:                         <div className="col-span-4 space-y-8">
+801:                             <div>
+802:                                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-4">Evidence Sufficiency</h3>
+803:                                 <div className="glass-panel p-5 space-y-4">
+804:                                     <div className="flex justify-between items-end border-b border-white/5 pb-3">
+805:                                         <span className="text-xs font-medium text-zinc-500">Synthesis Confidence</span>
+806:                                         <span className={`text-sm font-bold ${(synthesisBrief.synthesis_confidence as number) > 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+807:                                             {synthesisBrief.synthesis_confidence as number}%
+808:                                         </span>
+809:                                     </div>
+810:                                     <div className="flex justify-between items-end border-b border-white/5 pb-3">
+811:                                         <span className="text-xs font-medium text-zinc-500">Evidence Count</span>
+812:                                         <span className="text-sm font-bold text-zinc-200">{synthesisBrief.evidence_count as number}</span>
+813:                                     </div>
+814:                                     <div className="flex justify-between items-end border-b border-white/5 pb-3">
+815:                                         <span className="text-xs font-medium tex
+<truncated 45283 bytes>
+800 rounded-full px-6 py-3 flex flex-col gap-2 shadow-2xl z-20">
+1357:                     <div className="flex justify-between items-center px-2">
+1358:                         <span className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">Strategic Timeline Replay</span>
+1359:                         <span className="text-[10px] font-mono text-zinc-300">T - {30 - temporalDay} Days</span>
+1360:                     </div>
+1361:                     <input 
+1362:                         type="range" 
+1363:                         min="0" 
+1364:                         max="30" 
+1365:                         value={temporalDay} 
+1366:                         onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+1367:                         className="w-full accent-blue-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+1368:                     />
+1369:                     <div className="flex justify-between px-2 mt-1">
+1370:                         <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+1371:                         <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+1372:                     </div>
+1373:                 </div>
+1374:              </div>
+1375:           ) : masterMode === "SIMULATION" ? (
+1376:              /* SCENARIO SANDBOX TAB */
+1377:              <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+1378:                 <div className="flex justify-between items-start mb-6">
+1379:                   <div>
+1380:                     <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+1381:                       <Zap className="w-3 h-3" /> Scenario Sandbox
+1382:                     </h2>
+1383:                     <p className="text-[10px]
+<truncated 16303 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.
+
+--------------------------
+
+Created At: 2026-05-28T12:35:38Z
+Completed At: 2026-05-28T12:35:39Z
+
+				The command completed successfully.
+				Output:
+				                        className="w-full accent-blue-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between px-2 mt-1">
+                        <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+                        <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+                    </div>
+                </div>
+             </div>
+          ) : masterMode === "SIMULATION" ? (
+             /* SCENARIO SANDBOX TAB */
+             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                      <Zap className="w-3 h-3" /> Scenario Sandbox
+                    </h2>
+                    <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+                    <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+                  </div>
+                  {simulationResult && (
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+                      <div className="text-[10px] font-mono text-blue-400">{(simulationResult as any).fingerprints?.simulation_hash.substring(0, 16)}...</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+                  {/* Left Column: Inputs */}
+                  <div className="col-span-1 flex flex-col gap-4">
+                    <div className="border border-zinc-800 bg-zinc-900/50 p-4 rounded-lg flex flex-col gap-3">
+
+
+
+--------------------------
+
+Created At: 2026-05-28T12:36:51Z
+Completed At: 2026-05-28T12:36:53Z
+
+				The command completed successfully.
+				Output:
+				                        className="w-full accent-blue-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between px-2 mt-1">
+                        <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+                        <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+                    </div>
+                </div>
+             </div>
+          ) : masterMode === "SIMULATION" ? (
+             /* SCENARIO SANDBOX TAB */
+             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                      <Zap className="w-3 h-3" /> Scenario Sandbox
+                    </h2>
+                    <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+                    <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+                  </div>
+                  {simulationResult && (
+                    <div className="text-right">
+
+
+
+--------------------------
+
+Created At: 2026-05-28T12:48:32Z
+Completed At: 2026-05-28T12:48:34Z
+
+				The command completed successfully.
+				Output:
+				                        <span className="text-[10px] font-mono text-zinc-300">T - {30 - temporalDay} Days</span>
+                    </div>
+                    <input 
+                        type="range" 
+                        min="0" 
+                        max="30" 
+                        value={temporalDay} 
+                        onChange={(e) => setTemporalDay(parseInt(e.target.value))}
+                        className="w-full accent-blue-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between px-2 mt-1">
+                        <span className="text-[8px] font-mono text-zinc-600">-30D</span>
+                        <span className="text-[8px] font-mono text-emerald-500">LIVE</span>
+                    </div>
+                </div>
+             </div>
+          ) : masterMode === "SIMULATION" ? (
+             /* SCENARIO SANDBOX TAB */
+             <div className="flex-1 flex flex-col min-h-0 border border-blue-500/20 bg-[#0b0f14] p-8 overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-[9px] font-mono text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                      <Zap className="w-3 h-3" /> Scenario Sandbox
+                    </h2>
+                    <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase">Counterfactual Strategic Projection</p>
+                    <p className="text-[9px] font-mono text-amber-500/80 mt-1 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded inline-block">Bounded by historical evidence and institutional constraints.</p>
+                  </div>
+                  {simulationResult && (
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono text-zinc-500">SIMULATION HASH</div>
+                      <div className="text-[10px] font-mono text-blue-400">{(simulationResult as any).fingerprints?.simulation_hash.substring(0, 16)}...</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+                  {/* Left Column: Inputs */}
+                  <div className="col-span-1 flex flex-col gap-4">
+                    <div className="border border-zinc-800 bg-zinc-900/50 p-4 rounded-lg flex flex-col gap-3">
+                      <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Perturbation Variables</h3>
+                      <div>
+
+
+
+--------------------------
+
